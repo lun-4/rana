@@ -1,7 +1,10 @@
 from sanic import Sanic
 from sanic.response import json
 
+from blueprints import group
+
 app = Sanic()
+app.blueprint(group)
 
 @app.route("/")
 async def test(request):
