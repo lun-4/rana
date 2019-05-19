@@ -7,5 +7,5 @@ reverse engineering wakatime for fun
 
 ```
 pipenv install
-pipenv run python run.py
+pipenv run python -m rana.run
 ```

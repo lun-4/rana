@@ -1,6 +1,6 @@
 from rana.errors import Unauthorized
 
-async def auth_route(handler):
+def auth_route(handler):
     """Enables basic API key authentication."""
     async def new_handler(request, *args, **kwargs):
         auth = request.headers['authorization']
