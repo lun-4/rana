@@ -3,9 +3,9 @@ from rana.errors import Unauthorized
 def auth_route(handler):
     """Enables basic API key authentication."""
     async def new_handler(request, *args, **kwargs):
-        auth = request.headers['authorization']
-
-        if not auth:
+        try:
+            auth = request.headers['authorization']
+        except KeyError:
             raise Unauthorized('No token provided')
 
         # TODO: handle Authorication
