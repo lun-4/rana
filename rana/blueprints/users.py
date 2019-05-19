@@ -1,7 +1,7 @@
 from sanic import Blueprint
-from sanic.response import json
 
 from rana.decorators import auth_route
+from rana.utils import json
 
 bp = Blueprint('users', url_prefix='/users')
 
