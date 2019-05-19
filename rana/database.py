@@ -19,6 +19,7 @@ class Database:
         self.conn = sqlite3.connect('rana.db')
         sqlite3.register_adapter(uuid.UUID, lambda u: u.hex)
         app.conn = self.conn
+        self.setup_tables()
 
     def setup_tables(self):
         """Create basic tables."""
@@ -48,6 +49,13 @@ class Database:
             key text not null
         );
         """)
+
+        self.conn.commit()
+
+    async def close(self):
+        """Close the database."""
+        self.conn.commit()
+        self.conn.close()
 
     async def fetch(self, query, *args):
         """Execute a query and return the list of rows."""

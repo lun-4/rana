@@ -9,7 +9,7 @@ import pytest
 sys.path.append(os.getcwd())
 from rana.auth import hash_password
 from rana.run import app as rana_app
-
+from helper import RanaTestClient
 
 @pytest.fixture(name='app')
 def app_fixture():
@@ -25,7 +25,7 @@ def test_cli(loop, app, sanic_client):
 
 
 @pytest.fixture
-async def test_user(loop, app):
+async def test_user(app):
     """Yield a randomly generated test user.
 
     After the test is run, the test user is deleted.
@@ -35,7 +35,7 @@ async def test_user(loop, app):
 
     username = secrets.token_hex(6)
     password = secrets.token_hex(6)
-    pwd_hash = await hash_password(password, loop=loop)
+    pwd_hash = await hash_password(password, loop=app.loop)
 
     await app.db.execute("""
     insert into users (id, username, password_hash, created_at)
@@ -57,3 +57,8 @@ async def test_user(loop, app):
     await app.db.execute("""
     delete from users where user_id = ?
     """, (user_id,))
+
+
+@pytest.fixture
+async def test_cli_user(test_cli, test_user):
+    yield RanaTestClient(test_cli, test_user)

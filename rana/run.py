@@ -35,6 +35,11 @@ async def rana_generic_err(request, exception):
     }, status=500)
 
 
+@app.listener('after_server_stop')
+async def teardown_func(app_, loop):
+    await app.db.close()
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     app.run(host="0.0.0.0", port=8000)
