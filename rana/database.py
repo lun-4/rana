@@ -20,7 +20,7 @@ class Database:
     def __init__(self, app):
         self.app = app
         self.conn = sqlite3.connect('rana.db')
-        sqlite3.register_adapter(uuid.UUID, lambda u: u.hex)
+        sqlite3.register_adapter(uuid.UUID, str)
         app.conn = self.conn
         self.setup_tables()
 

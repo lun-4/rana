@@ -13,11 +13,12 @@ def auth_route(handler):
 
         app = request.app
         b64_data = auth.lstrip('Basic ')
-        provided_api_key = base64.b64decode(b64_data)
+        provided_api_key = base64.b64decode(b64_data).decode()
+        api_key = str(uuid.UUID(provided_api_key))
 
         user_row = await app.db.fetchrow("""
         select user_id from api_keys where key = ?
-        """, (provided_api_key,))
+        """, (api_key,))
 
         if not user_row:
             raise Unauthorized('Invalid API key')
