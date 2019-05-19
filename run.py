@@ -1,7 +1,7 @@
 from sanic import Sanic
 from sanic.response import json
 
-from blueprints import group
+from rana.blueprints import group
 
 app = Sanic()
 app.blueprint(group)
