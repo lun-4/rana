@@ -1,6 +1,9 @@
+import datetime
+import logging
 import sqlite3
 import uuid
-import datetime
+
+log = logging.getLogger()
 
 
 def timestamp_(tstamp: int) -> str:
@@ -54,8 +57,13 @@ class Database:
 
     async def close(self):
         """Close the database."""
+        log.debug('closing db')
         self.conn.commit()
-        self.conn.close()
+
+        # weird things happen when i'm unconditionally
+        # calling close() when testing.
+        if not self.app._testing:
+            self.conn.close()
 
     async def fetch(self, query, *args):
         """Execute a query and return the list of rows."""

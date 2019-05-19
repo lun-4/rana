@@ -15,6 +15,7 @@ from helper import RanaTestClient
 def app_fixture():
     """Yield Rana's app instance."""
     # TODO: maybe some function to create app instance
+    rana_app._testing = True
     yield rana_app
 
 
@@ -55,7 +56,7 @@ async def test_user(app):
     """, (user_id,))
 
     await app.db.execute("""
-    delete from users where user_id = ?
+    delete from users where id = ?
     """, (user_id,))
 
 

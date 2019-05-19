@@ -8,6 +8,8 @@ from rana.errors import RanaError
 from rana.database import Database
 
 app = Sanic()
+app._testing = False
+
 log = logging.getLogger(__name__)
 app.blueprint(group)
 app.db = Database(app)
@@ -37,7 +39,7 @@ async def rana_generic_err(request, exception):
 
 @app.listener('after_server_stop')
 async def teardown_func(app_, loop):
-    await app.db.close()
+    await app_.db.close()
 
 
 if __name__ == "__main__":
