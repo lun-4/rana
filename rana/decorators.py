@@ -1,3 +1,6 @@
+import base64
+import uuid
+
 from rana.errors import Unauthorized
 
 def auth_route(handler):
@@ -6,10 +9,20 @@ def auth_route(handler):
         try:
             auth = request.headers['authorization']
         except KeyError:
-            raise Unauthorized('No token provided')
+            raise Unauthorized('No API key provided')
 
-        # TODO: handle Authorication
+        app = request.app
+        b64_data = auth.lstrip('Basic ')
+        provided_api_key = base64.b64decode(b64_data)
 
-        return await handler(request, *args, **kwargs)
+        user_row = await app.db.fetchrow("""
+        select user_id from api_keys where api_key = ?
+        """, (provided_api_key,))
+
+        if not user_row:
+            raise Unauthorized('Invalid API key')
+
+        user_id = uuid.UUID(user_row[0])
+        return await handler(request, user_id, *args, **kwargs)
 
     return new_handler

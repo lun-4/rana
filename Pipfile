@@ -9,6 +9,7 @@ pytest-sanic = "*"
 
 [packages]
 sanic = "*"
+bcrypt = "*"
 
 [requires]
 python_version = "3.7"

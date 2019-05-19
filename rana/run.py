@@ -5,14 +5,18 @@ from sanic.response import json
 
 from rana.blueprints import group
 from rana.errors import RanaError
+from rana.database import Database
 
 app = Sanic()
 log = logging.getLogger(__name__)
 app.blueprint(group)
+app.db = Database(app)
+
 
 @app.route("/")
 async def test(request):
     return json({"hello": "world"})
+
 
 @app.exception(RanaError)
 async def rana_error_handler(request, exception: RanaError):

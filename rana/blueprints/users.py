@@ -7,5 +7,5 @@ bp = Blueprint('users', url_prefix='/users')
 
 @bp.get('/current')
 @auth_route
-async def get_current_user(request):
-    return text('uwu')
+async def get_current_user(request, user_id):
+    return text(f'uwu: {user_id}')

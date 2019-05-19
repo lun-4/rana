@@ -17,7 +17,7 @@ class Database:
     def __init__(self, app):
         self.app = app
         self.conn = sqlite3.connect('rana.db')
-        self.conn.register_adapter(uuid.UUID, lambda u: u.hex)
+        sqlite3.register_adapter(uuid.UUID, lambda u: u.hex)
         app.conn = self.conn
 
     def setup_tables(self):
@@ -26,6 +26,8 @@ class Database:
         create table if not exists users (
             id text primary key,
             username text not null,
+            password_hash text not null,
+
             display_name text default null,
             website text default null,
 
@@ -38,21 +40,31 @@ class Database:
             last_heartbeat_at bigint default null,
             last_plugin text default null,
             last_plugin_name text default null,
-            last_project text default null,
+            last_project text default null
+        );
+
+        create table if not exists api_keys (
+            user_id bigint primary key references users (id),
+            key text not null
         );
         """)
 
     async def fetch(self, query, *args):
         """Execute a query and return the list of rows."""
         cur = self.conn.cursor()
-        cur.execute(query, *args)
+        cur.execute(query, args)
         return cur.fetchrows()
 
     async def fetchrow(self, query, args):
         """Execute a query and return a single result row."""
         cur = self.conn.cursor()
-        cur.execute(query, *args)
+        cur.execute(query, args)
         return cur.fetchone()
+
+    async def execute(self, query, args):
+        """Execute SQL."""
+        self.conn.execute(query, args)
+        self.conn.commit()
 
     async def fetch_user(self, user_id: uuid.UUID) -> dict:
         """Fetch a single user and return the dictionary
