@@ -2,16 +2,25 @@ import datetime
 import logging
 import sqlite3
 import uuid
+from typing import Optional
 
 log = logging.getLogger()
 
 
-def timestamp_(tstamp: int) -> str:
+def timestamp_(tstamp: Optional[int]) -> Optional[str]:
+    """Return a ISO timestamp string from a UNIX timestamp integer."""
+    if tstamp is None:
+        return None
+
     dtm = datetime.datetime.fromtimestamp(tstamp)
     return dtm.isoformat()
 
 
-def uuid_(identifier: str) -> str:
+def uuid_(identifier: Optional[str]) -> Optional[str]:
+    """Return a json-friendly version of a given UUID string."""
+    if identifier is None:
+        return None
+
     return str(uuid.UUID(identifier))
 
 
@@ -85,7 +94,7 @@ class Database:
     async def fetch_user(self, user_id: uuid.UUID) -> dict:
         """Fetch a single user and return the dictionary
         representing the API view of them."""
-        row = await self.conn.fetchrow("""
+        row = await self.fetchrow("""
         select
             id, username, display_name, website, created_at, modified_at,
             last_heartbeat_at, last_plugin, last_plugin_name, last_project
