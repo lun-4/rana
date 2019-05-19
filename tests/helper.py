@@ -1,6 +1,8 @@
 import base64
 
 class RanaTestClient:
+    """Test client that wraps pytest-sanic's TestClient and a test
+    user and adds authorization headers to test requests."""
     def __init__(self, test_cli, test_user):
         self.cli = test_cli
         self.user = test_user
@@ -10,7 +12,7 @@ class RanaTestClient:
         test request before passing the request on
         to the underlying TestClient."""
         headers = kwargs.get('headers', {})
-        api_key = self.user['api_key']
+        api_key = str(self.user['api_key']).encode()
         api_key_b64 = base64.b64encode(api_key).decode()
         headers['authorization'] = f'Basic {api_key_b64}'
 

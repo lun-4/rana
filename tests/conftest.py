@@ -11,6 +11,7 @@ from rana.auth import hash_password
 from rana.run import app as rana_app
 from helper import RanaTestClient
 
+
 @pytest.fixture(name='app')
 def app_fixture():
     """Yield Rana's app instance."""
@@ -48,7 +49,7 @@ async def test_user(app):
     values (?, ?)
     """, (user_id, api_key))
 
-    yield {'id': user_id, 'key': api_key,
+    yield {'id': user_id, 'api_key': api_key,
            'username': username, 'password': password}
 
     await app.db.execute("""

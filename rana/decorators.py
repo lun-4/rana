@@ -16,7 +16,7 @@ def auth_route(handler):
         provided_api_key = base64.b64decode(b64_data)
 
         user_row = await app.db.fetchrow("""
-        select user_id from api_keys where api_key = ?
+        select user_id from api_keys where key = ?
         """, (provided_api_key,))
 
         if not user_row:
