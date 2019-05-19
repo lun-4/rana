@@ -24,6 +24,53 @@ def uuid_(identifier: Optional[str]) -> Optional[str]:
     return str(uuid.UUID(identifier))
 
 
+SQL_SETUP_SCRIPT = """
+create table if not exists users (
+    id text primary key,
+    username text not null,
+    password_hash text not null,
+
+    display_name text default null,
+    website text default null,
+
+    created_at bigint not null,
+    modified_at bigint default null,
+
+    languages_used_public bool default false not null,
+    logged_time_public bool default false not null,
+
+    last_heartbeat_at bigint default null,
+    last_plugin text default null,
+    last_plugin_name text default null,
+    last_project text default null
+);
+
+create table if not exists api_keys (
+    user_id bigint primary key references users (id),
+    key text not null
+);
+
+create table if not exists heartbeats (
+    id text primary key,
+    user_id bigint references users (id),
+
+    entity text not null,
+    type text not null,
+    category text not null,
+    time real not null,
+    is_write bool not null default false,
+
+    project text default null,
+    branch text default null,
+    language text default null,
+    dependencies text default null,
+    lines bigint not null,
+    lineno bigint default null,
+    cursorpos bigint default null
+);
+"""
+
+
 class Database:
     """Main database class."""
     def __init__(self, app):
@@ -35,33 +82,7 @@ class Database:
 
     def setup_tables(self):
         """Create basic tables."""
-        self.conn.executescript("""
-        create table if not exists users (
-            id text primary key,
-            username text not null,
-            password_hash text not null,
-
-            display_name text default null,
-            website text default null,
-
-            created_at bigint not null,
-            modified_at bigint default null,
-
-            languages_used_public bool default false not null,
-            logged_time_public bool default false not null,
-
-            last_heartbeat_at bigint default null,
-            last_plugin text default null,
-            last_plugin_name text default null,
-            last_project text default null
-        );
-
-        create table if not exists api_keys (
-            user_id bigint primary key references users (id),
-            key text not null
-        );
-        """)
-
+        self.conn.executescript(SQL_SETUP_SCRIPT)
         self.conn.commit()
 
     async def close(self):
