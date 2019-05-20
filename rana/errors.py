@@ -7,6 +7,9 @@ class RanaError(Exception):
         """Return the error message for the given error."""
         return self.args[0]
 
+class BadRequest(RanaError):
+    status_code = 400
+
 class Unauthorized(RanaError):
     status_code = 401
 
