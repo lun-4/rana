@@ -107,6 +107,17 @@ class Database:
         cur.execute(query, args)
         return cur.fetchone()
 
+    async def fetchval(self, query, args):
+        """Execute a query and return the first value of the row."""
+        cur = self.conn.cursor()
+        cur.execute(query, args)
+
+        row = cur.fetchone()
+        if row is None:
+            return row
+
+        return row[0]
+
     async def execute(self, query, args):
         """Execute SQL."""
         self.conn.execute(query, args)

@@ -36,6 +36,7 @@ async def check_password(pwd_hash_s: str, password_s: str, *, loop=None):
 
 
 async def token_check():
+    """Check if the given API key in the authorization header is valid."""
     try:
         auth = request.headers['Authorization']
     except KeyError:
@@ -56,3 +57,21 @@ async def token_check():
         raise Unauthorized('Invalid API key')
 
     return uuid.UUID(user_row[0])
+
+
+async def login(username: str, password: str) -> uuid.UUID:
+    """Login a given user. Returns their user ID."""
+    if not username or not password:
+        raise Unauthorized('no username or password provided')
+
+    user = await app.db.fetchrow("""
+    select id, password_hash
+    from users
+    where username = ?
+    """, (username,))
+
+    if not user:
+        raise Unauthorized('user not found')
+
+    await check_password(password, user[1])
+    return user[0]

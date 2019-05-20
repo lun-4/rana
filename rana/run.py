@@ -1,4 +1,5 @@
 import logging
+import secrets
 
 from quart import Quart, jsonify
 
@@ -36,6 +37,7 @@ def setup_blueprints(app_):
 
 
 app = make_app()
+app.secret_key = secrets.token_hex(16)
 setup_blueprints(app)
 
 

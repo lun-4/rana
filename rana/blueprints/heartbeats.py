@@ -10,6 +10,5 @@ async def post_heartbeat():
 
 @bp.route('/current/heartbeats.bulk', methods=['POST'])
 async def post_many_heartbeats():
-    user_id = await token_check()
+    #user_id = await token_check()
     return 'uwu', 200
-
