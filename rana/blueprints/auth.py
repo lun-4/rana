@@ -90,6 +90,9 @@ async def signup_handler():
 async def login_handler():
     """Logins a single user. Reroutes them to /dashboard on success.
     """
+    if 'user_id' in session:
+        return redirect('/dashboard')
+
     res = await _extract_userpass(_login_tmpl)
     if not isinstance(res, tuple):
         return res
