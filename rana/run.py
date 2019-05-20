@@ -2,7 +2,7 @@ import logging
 
 from quart import Quart, jsonify
 
-from rana.blueprints import auth, users, heartbeats
+from rana.blueprints import auth, users, heartbeats, index
 from rana.errors import RanaError
 from rana.database import Database
 
@@ -20,6 +20,8 @@ def setup_blueprints(app_):
     """Setup blueprints for the app object."""
     bps = {
         auth: -1,
+        index: -1,
+
         users: '/users',
         heartbeats: '/users',
     }
@@ -47,11 +49,6 @@ async def app_before_serving():
 async def app_after_serving():
     log.info('closing db')
     await app.db.close()
-
-
-@app.route("/")
-async def test():
-    return jsonify({"hello": "world"})
 
 
 @app.errorhandler(RanaError)
