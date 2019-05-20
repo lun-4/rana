@@ -5,12 +5,11 @@ verify_ssl = true
 
 [dev-packages]
 pytest = "*"
-pytest-sanic = "*"
 pytest-asyncio = "*"
 
 [packages]
-sanic = "*"
 bcrypt = "*"
+quart = "*"
 
 [requires]
 python_version = "3.7"

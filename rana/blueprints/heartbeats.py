@@ -1,16 +1,15 @@
-from sanic import Blueprint
-from sanic.response import text
-
+from quart import Blueprint
 from rana.decorators import auth_route
 
-bp = Blueprint('heartbeats', url_prefix='/users')
+bp = Blueprint('heartbeats', __name__)
 
-@bp.post('/current/heartbeats')
+@bp.route('/current/heartbeats', methods=['POST'])
 @auth_route
-async def post_heartbeat(request, user_id):
-    return text('uwu')
+async def post_heartbeat(user_id):
+    return 200, 'uwu'
 
-@bp.post('/current/heartbeats.bulk')
+@bp.route('/current/heartbeats.bulk', methods=['POST'])
 @auth_route
-async def post_many_heartbeats(request, user_id):
-    return text('uwu')
+async def post_many_heartbeats(user_id):
+    return 200, 'uwu'
+

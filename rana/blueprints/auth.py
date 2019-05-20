@@ -1,16 +1,16 @@
-from sanic import Blueprint
-from sanic.response import json
-
+from quart import Blueprint, jsonify
 from rana.decorators import auth_route
 
-bp = Blueprint('auth')
+bp = Blueprint('auth', __name__)
+
 
 @bp.route('/signup', methods=['GET', 'POST'])
-async def signup_handler(request):
+async def signup_handler():
     pass
 
+
 @bp.route('/login', methods=['GET', 'POST'])
-async def login_handler(request):
+async def login_handler():
     # returns page with errors when request has errors
     # (this is all on formdata)
     # default page if username, password not provided

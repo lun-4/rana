@@ -13,17 +13,28 @@ from helper import RanaTestClient
 
 
 @pytest.fixture(name='app')
-def app_fixture():
-    """Yield Rana's app instance."""
+def app_fixture(loop):
+    """Yield Rana's app instance.
+
+    This structure was taken off Litecord's test app code.
+    """
     # TODO: maybe some function to create app instance
     rana_app._testing = True
+
+    # make sure we're calling the before_serving hooks
+    loop.run_until_complete(rana_app.startup())
+
+    # https://docs.pytest.org/en/latest/fixture.html#fixture-finalization-executing-teardown-code
     yield rana_app
+
+    # properly teardown
+    loop.run_until_complete(rana_app.shutdown())
 
 
 @pytest.fixture
-def test_cli(loop, app, sanic_client):
+def test_cli(app):
     """Yield the test client."""
-    return loop.run_until_complete(sanic_client(app))
+    return app.test_client()
 
 
 @pytest.fixture

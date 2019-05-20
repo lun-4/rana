@@ -1,13 +1,12 @@
-from sanic import Blueprint
-
+from quart import Blueprint, current_app as app
 from rana.decorators import auth_route
-from rana.utils import json
+from rana.utils import jsonify
 
-bp = Blueprint('users', url_prefix='/users')
+bp = Blueprint('users', __name__)
 
-@bp.get('/current')
+@bp.route('/current', methods=['GET'])
 @auth_route
-async def get_current_user(request, user_id):
+async def get_current_user(user_id):
     """Return the currently logged user as a user object."""
-    user = await request.app.db.fetch_user(user_id)
-    return json(user)
+    user = await app.db.fetch_user(user_id)
+    return jsonify(user)
