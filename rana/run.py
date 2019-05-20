@@ -3,7 +3,7 @@ import logging
 from sanic import Sanic
 from sanic.response import json
 
-from rana.blueprints import group
+from rana.blueprints import group, auth
 from rana.errors import RanaError
 from rana.database import Database
 
@@ -11,6 +11,7 @@ app = Sanic()
 app._testing = False
 
 log = logging.getLogger(__name__)
+app.blueprint(auth)
 app.blueprint(group)
 app.db = Database(app)
 
