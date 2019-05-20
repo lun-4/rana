@@ -63,7 +63,7 @@ async def signup_handler():
 
     existing = await app.db.fetchrow("""
     select id from users where username = ?
-    """, (username,))
+    """, username)
 
     if existing is not None:
         return await _signup_tmpl(error='username already exists')
@@ -76,12 +76,12 @@ async def signup_handler():
     await app.db.execute("""
     insert into users (id, username, password_hash, created_at)
     values (?, ?, ?, ?)
-    """, (user_id, username, pwd_hash, time.time()))
+    """, user_id, username, pwd_hash, time.time())
 
     await app.db.execute("""
     insert into api_keys (user_id, key)
     values (?, ?)
-    """, (user_id, api_key))
+    """, user_id, api_key)
 
     return redirect('/login')
 
@@ -102,11 +102,11 @@ async def login_handler():
 
     orig_username = await app.db.fetchval("""
     select username from users where id = ?
-    """, (user_id,))
+    """, user_id)
 
     api_key = await app.db.fetchval("""
     select key from api_keys where user_id = ?
-    """, (user_id,))
+    """, user_id)
 
     session['username'] = orig_username
     session['api_key'] = api_key
@@ -131,7 +131,7 @@ async def revoke_api_key():
 
     await app.db.execute("""
     update api_keys set key = ? where key = ?
-    """, (old_api_key, new_api_key))
+    """, old_api_key, new_api_key)
 
     session['api_key'] = new_api_key
     return await _dashboard_tmpl()

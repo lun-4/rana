@@ -51,7 +51,7 @@ async def token_check():
 
     user_row = await app.db.fetchrow("""
     select user_id from api_keys where key = ?
-    """, (api_key,))
+    """, api_key)
 
     if not user_row:
         raise Unauthorized('Invalid API key')
@@ -68,7 +68,7 @@ async def login(username: str, password: str) -> uuid.UUID:
     select id, password_hash
     from users
     where username = ?
-    """, (username,))
+    """, username)
 
     if not user:
         raise Unauthorized('user not found')

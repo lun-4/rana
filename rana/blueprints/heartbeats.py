@@ -1,3 +1,4 @@
+import uuid
 from quart import Blueprint, request, jsonify
 
 from rana.auth import token_check
@@ -9,6 +10,7 @@ bp = Blueprint('heartbeats', __name__)
 
 
 async def _process_hb(user_id, heartbeat):
+    heartbeat_id = uuid.uuid4()
     return {}
 
 
