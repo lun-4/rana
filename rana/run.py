@@ -6,12 +6,14 @@ from rana.blueprints import auth, users, heartbeats
 from rana.errors import RanaError
 from rana.database import Database
 
-logging.basicConfig(level=logging.DEBUG)
-
-app = Quart(__name__)
-app._testing = False
-
 log = logging.getLogger(__name__)
+
+
+def make_app():
+    app = Quart(__name__)
+    app._testing = False
+    logging.basicConfig(level=logging.DEBUG)
+    return app
 
 
 def setup_blueprints(app_):
@@ -23,12 +25,16 @@ def setup_blueprints(app_):
     }
 
     for bpr, suffix in bps.items():
-        url_prefix = f'/api/v6{suffix or ""}'
+        url_prefix = f'/api/v1{suffix or ""}'
 
         if suffix == -1:
             url_prefix = ''
 
         app_.register_blueprint(bpr, url_prefix=url_prefix)
+
+
+app = make_app()
+setup_blueprints(app)
 
 
 @app.before_serving
@@ -54,7 +60,7 @@ async def rana_error_handler(exception: RanaError):
     JSON body + status code."""
     return jsonify({
         'error': exception.message
-    }, status=exception.status_code)
+    }), exception.status_code
 
 
 @app.errorhandler(500)
@@ -62,4 +68,4 @@ async def rana_generic_err(err):
     log.exception('Error on request: %r', err)
     return jsonify({
         'error': repr(err),
-    }, status=500)
+    }), 500

@@ -13,7 +13,7 @@ from helper import RanaTestClient
 
 
 @pytest.fixture(name='app')
-def app_fixture(loop):
+def app_fixture(event_loop):
     """Yield Rana's app instance.
 
     This structure was taken off Litecord's test app code.
@@ -22,13 +22,13 @@ def app_fixture(loop):
     rana_app._testing = True
 
     # make sure we're calling the before_serving hooks
-    loop.run_until_complete(rana_app.startup())
+    event_loop.run_until_complete(rana_app.startup())
 
     # https://docs.pytest.org/en/latest/fixture.html#fixture-finalization-executing-teardown-code
     yield rana_app
 
     # properly teardown
-    loop.run_until_complete(rana_app.shutdown())
+    event_loop.run_until_complete(rana_app.shutdown())
 
 
 @pytest.fixture
@@ -38,7 +38,7 @@ def test_cli(app):
 
 
 @pytest.fixture
-async def test_user(app):
+async def test_user(app, event_loop):
     """Yield a randomly generated test user.
 
     After the test is run, the test user is deleted.
@@ -48,7 +48,7 @@ async def test_user(app):
 
     username = secrets.token_hex(6)
     password = secrets.token_hex(6)
-    pwd_hash = await hash_password(password, loop=app.loop)
+    pwd_hash = await hash_password(password, loop=event_loop)
 
     await app.db.execute("""
     insert into users (id, username, password_hash, created_at)

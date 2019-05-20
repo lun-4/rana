@@ -1,7 +1,13 @@
+import binascii
 import asyncio
+import base64
+import uuid
 
 import bcrypt
+from quart import request, current_app as app
+
 from rana.errors import Unauthorized
+
 
 async def hash_password(password: str, *, loop=None) -> str:
     """Generate a hash for any given password"""
@@ -13,6 +19,7 @@ async def hash_password(password: str, *, loop=None) -> str:
     )
 
     return (await hashed).decode('utf-8')
+
 
 async def check_password(pwd_hash_s: str, password_s: str, *, loop=None):
     """Check if any given two passwords match. Raises Unauthroized on
@@ -26,3 +33,26 @@ async def check_password(pwd_hash_s: str, password_s: str, *, loop=None):
 
     if not valid:
         raise Unauthorized('invalid password')
+
+
+async def token_check():
+    try:
+        auth = request.headers['Authorization']
+    except KeyError:
+        raise Unauthorized('No API key provided')
+
+    try:
+        b64_data = auth.lstrip('Basic ')
+        provided_api_key = base64.b64decode(b64_data).decode()
+        api_key = str(uuid.UUID(provided_api_key))
+    except binascii.Error, ValueError:
+        raise Unauthorized('Invalid API key provided')
+
+    user_row = await app.db.fetchrow("""
+    select user_id from api_keys where key = ?
+    """, (api_key,))
+
+    if not user_row:
+        raise Unauthorized('Invalid API key')
+
+    return uuid.UUID(user_row[0])

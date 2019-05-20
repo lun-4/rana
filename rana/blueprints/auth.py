@@ -1,5 +1,4 @@
 from quart import Blueprint, jsonify
-from rana.decorators import auth_route
 
 bp = Blueprint('auth', __name__)
 
