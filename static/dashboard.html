@@ -1,12 +1,18 @@
 <html>
     <head>
+        <style>
+        #graph {
+            height: 300px;
+            width: 700px;
+        }
+        </style>
     </head>
     <body>
         <h1>logged in as {{ session['username'] }}</h1>
         <h2>your api key is {{ session['api_key'] }}</h2>
 
         {% if session %}
-        <p> {{ graph_out | safe }} </p>
+        <p><div id="graph"> {{ graph_out | safe }} </div></p>
         {% endif %}
 
         <a href="revoke_api_key">click here to reset your api key</a>
