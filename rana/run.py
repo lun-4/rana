@@ -37,7 +37,20 @@ def setup_blueprints(app_):
 
 
 app = make_app()
-app.secret_key = secrets.token_hex(16)
+try:
+    secret_keyfile = open('.secret_app_key', 'r')
+    app.secret_key = secret_keyfile.read()
+    if not app.secret_key:
+        secret_keyfile.close()
+        raise FileNotFoundError()
+except FileNotFoundError:
+    app.secret_key = secrets.token_hex(32)
+    secret_keyfile = open('.secret_app_key', 'w')
+    secret_keyfile.write(app.secret_key)
+    secret_keyfile.flush()
+finally:
+    secret_keyfile.close()
+
 setup_blueprints(app)
 
 

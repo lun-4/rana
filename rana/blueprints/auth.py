@@ -29,8 +29,8 @@ async def _login_tmpl(**kwargs):
     return await _any_tmpl('login.html', **kwargs)
 
 
-async def _dashboard_tmpl():
-    return await _any_tmpl('dashboard.html')
+async def _dashboard_tmpl(**kwargs):
+    return await _any_tmpl('dashboard.html', **kwargs)
 
 
 async def _extract_userpass(tmpl):
@@ -90,7 +90,7 @@ async def signup_handler():
 async def login_handler():
     """Logins a single user. Reroutes them to /dashboard on success.
     """
-    if 'user_id' in session:
+    if session.get('user_id'):
         return redirect('/dashboard')
 
     res = await _extract_userpass(_login_tmpl)
@@ -116,7 +116,20 @@ async def login_handler():
 
 @bp.route('/dashboard', methods=['GET', 'POST'])
 async def dashboard_handler():
-    return await _dashboard_tmpl()
+    key = session.get('api_key')
+    if not key:
+        return redirect('/login')
+
+    user_id = await app.db.fetchval("""
+    select user_id from api_keys where key = ?
+    """, key)
+
+    # generate simple graph, read from plotly's generated file
+    # then deleting it, then injecting that generated html into
+    # the dashboard, if the user is in a session (with api_key)
+
+    graph_out = '<p>uwu</p>'
+    return await _dashboard_tmpl(graph_out=graph_out)
 
 
 @bp.route('/revoke_api_key', methods=['GET', 'POST'])
