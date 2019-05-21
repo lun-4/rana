@@ -22,8 +22,16 @@ class RanaValidator(Validator):
         """Validate a password. Max 2048 chars. Min 1."""
         return 1 <= len(value) <= 2048
 
-    def _validate_type_entity_type(value):
+    def _validate_type_entity_type(self, value):
         return value in ('app', 'file', 'domain')
+
+    def _validate_type_activity_type(self, value):
+        return value in (
+            'coding', 'building', 'indexing',
+            'debugging', 'browsing', 'running tests',
+            'writing tests', 'manual testing',
+            'code reviewing', 'designing'
+        )
 
 
 def validate(reqjson: Union[Dict, List], schema: Dict,
@@ -74,8 +82,11 @@ HEARTBEAT_MODEL = {
     'dependencies': {
         'type': 'list', 'schema': {'type': 'string'}, 'required': False},
 
-    'lines': {'coerce': int, 'depedencies': ['type']},
-    'lineno': {'coerce': int, 'depedencies': ['type'], 'required': False},
-    'cursorpos': {'coerce': int, 'depedencies': ['type'], 'required': False},
-    'is_write': {'coerce': bool, 'depedencies': ['type'], 'required': False},
+    'lines': {'coerce': int, 'dependencies': ['type']},
+    'lineno': {'coerce': int, 'dependencies': ['type'], 'required': False, 'nullable': True},
+    'cursorpos': {'coerce': int, 'dependencies': ['type'], 'required': False, 'nullable': True},
+    'is_write': {'coerce': bool, 'dependencies': ['type'], 'required': False},
+
+    # ignored
+    'user_agent': {'type': 'string', 'required': False},
 }

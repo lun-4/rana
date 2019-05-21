@@ -45,12 +45,16 @@ async def _process_hb(user_id, machine_id, heartbeat):
             entity, type, category, time,
             is_write, project, branch, language, lines, lineno, cursorpos)
         values
-            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (?, ?, ?,
+             ?, ?, ?,
+             ?, ?, ?,
+             ?, ?, ?,
+             ?, ?)
         """,
         heartbeat_id, user_id, machine_id,
         heartbeat['entity'], heartbeat['type'], heartbeat['category'],
-        heartbeat['time'], heartbeat['project'], heartbeat['branch'],
-        heartbeat['language'], heartbeat['lines'],
+        heartbeat['time'], heartbeat['is_write'], heartbeat['project'],
+        heartbeat['branch'], heartbeat['language'], heartbeat['lines'],
         heartbeat['lineno'], heartbeat['cursorpos'])
 
     return await app.db.fetch_heartbeat(heartbeat_id)
