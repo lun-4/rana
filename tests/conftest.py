@@ -53,23 +53,23 @@ async def test_user(app, event_loop):
     await app.db.execute("""
     insert into users (id, username, password_hash, created_at)
     values (?, ?, ?, ?)
-    """, (user_id, username, pwd_hash, time.time()))
+    """, user_id, username, pwd_hash, time.time())
 
     await app.db.execute("""
     insert into api_keys (user_id, key)
     values (?, ?)
-    """, (user_id, api_key))
+    """, user_id, api_key)
 
     yield {'id': user_id, 'api_key': api_key,
            'username': username, 'password': password}
 
     await app.db.execute("""
     delete from api_keys where user_id = ?
-    """, (user_id,))
+    """, user_id)
 
     await app.db.execute("""
     delete from users where id = ?
-    """, (user_id,))
+    """, user_id)
 
 
 @pytest.fixture

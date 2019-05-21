@@ -46,8 +46,8 @@ async def token_check():
         b64_data = auth.lstrip('Basic ')
         provided_api_key = base64.b64decode(b64_data).decode()
         api_key = str(uuid.UUID(provided_api_key))
-    except (binascii.Error, ValueError):
-        raise Unauthorized('Invalid API key provided')
+    except (binascii.Error, ValueError) as err:
+        raise Unauthorized(f'Invalid API key provided: {err!r}')
 
     user_row = await app.db.fetchrow("""
     select user_id from api_keys where key = ?
