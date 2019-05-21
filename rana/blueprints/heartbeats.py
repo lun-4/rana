@@ -1,5 +1,7 @@
 import uuid
+import pathlib
 from quart import Blueprint, request, jsonify, current_app as app
+from typing import Optional
 
 from rana.auth import token_check
 from rana.errors import BadRequest
@@ -36,8 +38,31 @@ async def fetch_machine(user_id) -> uuid.UUID:
     return mach_id
 
 
+EXTENSIONS = {
+    'zig': 'Zig',
+}
+
+
+def lang_from_ext(extension: str) -> Optional[str]:
+    """Return a heartbeat language out of its extension.
+
+    Used to give results for languages that aren't as commonplace.
+    """
+    return EXTENSIONS.get(extension)
+
+
 async def _process_hb(user_id, machine_id, heartbeat):
     heartbeat_id = uuid.uuid4()
+
+    if heartbeat.get('language') is None and heartbeat.get('type') == 'file':
+        entity_path = heartbeat['entity']
+
+        if entity_path.lower().startswith('c:'):
+            path = pathlib.PureWindowsPath(entity_path)
+        else:
+            path = pathlib.PurePosixPath(entity_path)
+
+        heartbeat['language'] = lang_from_ext(path.suffix)
 
     await app.db.execute(
         """
