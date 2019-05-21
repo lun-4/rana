@@ -61,8 +61,9 @@ def validate(reqjson: Union[Dict, List], schema: Dict,
     return validator.document
 
 HEARTBEAT_MODEL = {
-    'entity': {'type': 'string'},
-    'type': {'type': 'entity_type'},
+    'entity': {'type': 'string', 'required': True, 'nullable': False},
+    'type': {'type': 'entity_type', 'required': True, 'nullable': False},
+
     'category': {'type': 'activity_type', 'nullable': True},
     'time': {'coerce': float},
 

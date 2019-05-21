@@ -50,20 +50,26 @@ create table if not exists api_keys (
     key text not null
 );
 
+create table if not exists machines (
+    id text primary key,
+    user_id text references users (id),
+    name text
+);
+
 create table if not exists heartbeats (
     id text primary key,
-    user_id bigint references users (id),
+    user_id text references users (id),
+    machine_id text references machines (id),
 
     entity text not null,
     type text not null,
-    category text not null,
+    category text default null,
     time real not null,
     is_write bool not null default false,
 
     project text default null,
     branch text default null,
     language text default null,
-    dependencies text default null,
     lines bigint not null,
     lineno bigint default null,
     cursorpos bigint default null
@@ -123,7 +129,7 @@ class Database:
         self.conn.execute(query, args)
         self.conn.commit()
 
-    async def fetch_user(self, user_id: uuid.UUID) -> dict:
+    async def fetch_user(self, user_id: uuid.UUID) -> Optional[dict]:
         """Fetch a single user and return the dictionary
         representing the API view of them."""
         row = await self.fetchrow("""
@@ -131,7 +137,10 @@ class Database:
             id, username, display_name, website, created_at, modified_at,
             last_heartbeat_at, last_plugin, last_plugin_name, last_project
         from users where id = ?
-        """, (user_id,))
+        """, user_id)
+
+        if not row:
+            return None
 
         user = {
             'id': uuid_(row[0]),
@@ -173,3 +182,20 @@ class Database:
             user['human_readable_website'] = user['website'].lstrip('https://')
 
         return user
+
+    async def fetch_heartbeat(self, heartbeat_id: uuid.UUID) -> Optional[dict]:
+        """Fetch a single heartbeat."""
+        row = await self.fetchrow("""
+        select
+            id
+        from heartbeats where id = ?
+        """, heartbeat_id)
+
+        if not row:
+            return None
+
+        heartbeat = {
+            'id': uuid_(row[0]),
+        }
+
+        return heartbeat
