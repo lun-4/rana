@@ -6,6 +6,7 @@ from cerberus import Validator
 from quart import current_app as app
 
 from rana.errors import BadRequest
+from rana.utils import Date
 
 log = logging.getLogger(__name__)
 
@@ -89,4 +90,10 @@ HEARTBEAT_MODEL = {
 
     # ignored
     'user_agent': {'type': 'string', 'required': False},
+}
+
+DURATIONS_IN = {
+    'date': {'coerce': Date, 'required': True, 'nullable': False},
+    'project': {'type': 'string', 'required': False},
+    'branches': {'type': 'string', 'required': False}
 }

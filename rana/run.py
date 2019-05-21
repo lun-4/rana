@@ -3,18 +3,21 @@ import secrets
 
 from quart import Quart, jsonify
 
-from rana.blueprints import auth, users, heartbeats, index
+from rana.blueprints import (
+    auth, users, heartbeats, index, durations
+)
 from rana.errors import RanaError
 from rana.database import Database
 
 log = logging.getLogger(__name__)
 
 
-def make_app():
-    app = Quart(__name__)
-    app._testing = False
+def make_app() -> Quart:
+    """Return the app instance."""
+    app_ = Quart(__name__)
+    app_._testing = False
     logging.basicConfig(level=logging.DEBUG)
-    return app
+    return app_
 
 
 def setup_blueprints(app_):
@@ -25,6 +28,7 @@ def setup_blueprints(app_):
 
         users: '/users',
         heartbeats: '/users',
+        durations: '/users',
     }
 
     for bpr, suffix in bps.items():
