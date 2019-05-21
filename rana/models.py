@@ -77,7 +77,7 @@ HEARTBEAT_MODEL = {
 
     'project': {'type': 'string', 'required': False},
     'branch': {'type': 'string', 'required': False},
-    'language': {'type': 'string', 'required': False},
+    'language': {'type': 'string', 'required': False, 'nullable': True},
 
     'dependencies': {
         'type': 'list', 'schema': {'type': 'string'}, 'required': False},
