@@ -29,6 +29,7 @@ create table if not exists users (
     id text primary key,
     username text not null,
     password_hash text not null,
+    timezone text not null default 'Etc/GMT0',
 
     display_name text default null,
     website text default null,
@@ -81,7 +82,8 @@ class Database:
     """Main database class."""
     def __init__(self, app):
         self.app = app
-        self.conn = sqlite3.connect('rana.db')
+        self.conn = sqlite3.connect(
+            'rana.db' if app._testing else 'rana-test.db')
         sqlite3.register_adapter(uuid.UUID, str)
         app.conn = self.conn
         self.setup_tables()
@@ -129,13 +131,19 @@ class Database:
         self.conn.execute(query, args)
         self.conn.commit()
 
+    async def fetch_user_tz(self, user_id: uuid.UUID) -> Optional[str]:
+        """Fetch a user's configured timezone."""
+        return await self.fetchval(
+            'select timezone from users where id = ?', user_id)
+
     async def fetch_user(self, user_id: uuid.UUID) -> Optional[dict]:
         """Fetch a single user and return the dictionary
         representing the API view of them."""
         row = await self.fetchrow("""
         select
             id, username, display_name, website, created_at, modified_at,
-            last_heartbeat_at, last_plugin, last_plugin_name, last_project
+            last_heartbeat_at, last_plugin, last_plugin_name, last_project,
+            timezone
         from users where id = ?
         """, user_id)
 
@@ -159,6 +167,7 @@ class Database:
             'last_plugin': row[7],
             'last_plugin_name': row[8],
             'last_project': row[9],
+            'timezone': row[10],
 
             'logged_time_public': False,
             'languages_used_public': False,
@@ -174,7 +183,6 @@ class Database:
             'has_premium_features': False,
             'plan': 'basic',
             'location': 'Canberra, Australia',
-            'timezone': 'America/New_York'
         }
 
         if user['website'] is not None:

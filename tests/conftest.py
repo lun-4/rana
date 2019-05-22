@@ -68,6 +68,14 @@ async def test_user(app, event_loop):
     """, user_id)
 
     await app.db.execute("""
+    delete from heartbeats where user_id = ?
+    """, user_id)
+
+    await app.db.execute("""
+    delete from machines where user_id = ?
+    """, user_id)
+
+    await app.db.execute("""
     delete from users where id = ?
     """, user_id)
 

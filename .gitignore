@@ -125,5 +125,8 @@ dmypy.json
 *.db
 rana.db
 rana.db-journal
+rana-test.db
+rana-test.db-journal
+
 .secret_app_key
 temp-plot.html

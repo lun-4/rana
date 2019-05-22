@@ -1,8 +1,12 @@
 import time
+import datetime
+import secrets
+
 import pytest
 
 @pytest.mark.asyncio
 async def test_heartbeats(test_cli_user):
+    """Test heartbeat creation for the given user."""
     resp = await test_cli_user.post('/api/v1/users/current/heartbeats', json={
         'entity': '/home/uwu/uwu.py',
         'type': 'file',
@@ -22,5 +26,27 @@ async def test_heartbeats(test_cli_user):
 
 @pytest.mark.asyncio
 async def test_durations(test_cli_user):
-    # TODO
-    assert True
+    """Test if given"""
+    # create 5 minutes
+    for n in range(10):
+        resp = await test_cli_user.post(
+            '/api/v1/users/current/heartbeats', json={
+                'entity': '/home/uwu/uwu.py',
+                'type': 'file',
+                'category': None,
+                'time': time.time() + (n * 60),
+                'project': 'awoo',
+            })
+
+        assert resp.status_code == 201
+
+    utcnow = datetime.datetime.utcnow()
+    now = f'{utcnow.year}-{utcnow.month}-{utcnow.day}'
+    resp = await test_cli_user.get(
+        f'/api/v1/users/current/durations?date={now}')
+
+    assert resp.status_code == 200
+    rjson = await resp.json
+    print(rjson)
+    assert False
+    assert isinstance(rjson, dict)
