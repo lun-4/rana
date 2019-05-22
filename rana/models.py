@@ -76,17 +76,25 @@ HEARTBEAT_MODEL = {
     'category': {'type': 'activity_type', 'nullable': True},
     'time': {'coerce': float},
 
-    'project': {'type': 'string', 'required': False},
-    'branch': {'type': 'string', 'required': False},
-    'language': {'type': 'string', 'required': False, 'nullable': True},
+    'project': {'type': 'string', 'required': False,
+                'nullable': True, 'default': None},
+    'branch': {'type': 'string', 'required': False,
+               'nullable': True, 'default': None},
+    'language': {'type': 'string', 'required': False,
+                 'nullable': True, 'default': None},
 
     'dependencies': {
         'type': 'list', 'schema': {'type': 'string'}, 'required': False},
 
-    'lines': {'coerce': int, 'dependencies': ['type']},
-    'lineno': {'coerce': int, 'dependencies': ['type'], 'required': False, 'nullable': True},
-    'cursorpos': {'coerce': int, 'dependencies': ['type'], 'required': False, 'nullable': True},
-    'is_write': {'coerce': bool, 'dependencies': ['type'], 'required': False},
+    'lines': {'type': 'integer', 'dependencies': ['type'],
+              'required': False, 'default': 0},
+    'lineno': {'type': 'integer', 'dependencies': ['type'],
+               'required': False, 'nullable': True, 'default': 0},
+    'cursorpos': {'type': 'integer', 'dependencies': ['type'],
+                  'required': False, 'nullable': True, 'default': None},
+
+    'is_write': {'coerce': bool, 'dependencies': ['type'],
+                 'required': False, 'default': None},
 
     # ignored
     'user_agent': {'type': 'string', 'required': False},

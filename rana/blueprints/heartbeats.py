@@ -1,12 +1,12 @@
 import uuid
 import pathlib
-from quart import Blueprint, request, jsonify, current_app as app
+from quart import Blueprint, request, jsonify as qjsonify, current_app as app
 from typing import Optional
 
 from rana.auth import token_check
 from rana.errors import BadRequest
 from rana.models import validate, HEARTBEAT_MODEL
-from rana.utils import jsonify as rjsonify
+from rana.utils import jsonify as jsonify
 
 bp = Blueprint('heartbeats', __name__)
 
@@ -82,18 +82,15 @@ async def _process_hb(user_id, machine_id, heartbeat):
         heartbeat['branch'], heartbeat['language'], heartbeat['lines'],
         heartbeat['lineno'], heartbeat['cursorpos'])
 
-    return await app.db.fetch_heartbeat(heartbeat_id)
+    return await app.db.fetch_heartbeat_simple(heartbeat_id)
 
 
 @bp.route('/current/heartbeats', methods=['POST'])
 async def post_heartbeat():
     user_id = await token_check()
-
     raw_json = await request.get_json()
-    if not isinstance(raw_json, list):
-        raise BadRequest('no heartbeat list provided')
-
     j = validate(raw_json, HEARTBEAT_MODEL)
+
     machine_id = await fetch_machine(user_id)
     heartbeat = await _process_hb(user_id, machine_id, j)
     return jsonify(heartbeat), 201
@@ -125,6 +122,6 @@ async def post_many_heartbeats():
             await _process_hb(user_id, machine_id, heartbeat)
         )
 
-    return jsonify({
+    return qjsonify({
         'responses': res
     }), 201

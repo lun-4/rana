@@ -185,9 +185,10 @@ class Database:
 
     async def fetch_heartbeat(self, heartbeat_id: uuid.UUID) -> Optional[dict]:
         """Fetch a single heartbeat."""
+        # TODO: complete this query with all columns from heartbeats table.
         row = await self.fetchrow("""
         select
-            id
+            id, entity, type, category, time, project, language
         from heartbeats where id = ?
         """, heartbeat_id)
 
@@ -196,6 +197,34 @@ class Database:
 
         heartbeat = {
             'id': uuid_(row[0]),
+            'entity': row[1],
+            'type': row[2],
+            'category': row[3],
+            'time': row[4],
+            'project': row[5],
+            'language': row[6],
+        }
+
+        return heartbeat
+
+    async def fetch_heartbeat_simple(
+            self, heartbeat_id: uuid.UUID) -> Optional[dict]:
+        """Fetch a single heartbeat."""
+        row = await self.fetchrow("""
+        select
+            id, entity, type, time, project
+        from heartbeats where id = ?
+        """, heartbeat_id)
+
+        if not row:
+            return None
+
+        heartbeat = {
+            'id': uuid_(row[0]),
+            'entity': row[1],
+            'type': row[2],
+            'time': row[3],
+            'project': row[4],
         }
 
         return heartbeat

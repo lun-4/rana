@@ -62,7 +62,7 @@ async def calc_durations(user_id: uuid.UUID, spans) -> list:
 
     def _convert_duration(dur):
         return {
-            'project': dur['project'],
+            'project': dur['project'] or 'Other',
             'start': _isofy(dur['start']),
             'end': _isofy(dur['end']),
         }
