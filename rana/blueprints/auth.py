@@ -8,9 +8,6 @@ from quart import (
     current_app as app, request, redirect
 )
 
-import plotly.graph_objs as go
-from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
-
 from rana.auth import login, hash_password
 from rana.errors import Unauthorized
 
@@ -127,14 +124,10 @@ async def dashboard_handler():
     select user_id from api_keys where key = ?
     """, key)
 
-    # generate simple graph, read from plotly's generated file
-    # then deleting it, then injecting that generated html into
-    # the dashboard, if the user is in a session (with api_key)
-    
-    # TODO: generate graphs, cache graphs, etc
-    graph = [go.Scatter(x=[1, 2, 3], y=[3, 1, 6])]
-    graph_out = plot(graph, output_type='div', auto_open=False)
-    return await _dashboard_tmpl(graph_out=graph_out)
+    if user_id is None:
+        return redirect('/login')
+
+    return await _dashboard_tmpl()
 
 
 @bp.route('/revoke_api_key', methods=['GET', 'POST'])
