@@ -23,8 +23,8 @@ def _isofy(posix_tstamp: int) -> str:
 def _dur(row):
     """Duration object from row."""
     return {
-        'project': row[1],
-        'language': row[2],
+        'language': row[1],
+        'project': row[2],
         'start': row[3],
         'end': row[4],
     }

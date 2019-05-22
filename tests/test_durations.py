@@ -37,6 +37,7 @@ async def do_heartbeats(test_cli_user, minutes=10, *, project='awoo'):
                 'category': None,
                 'time': time.time() + (n * 60),
                 'project': project,
+                'language': 'uwu'
             })
 
         assert resp.status_code == 201
@@ -95,5 +96,8 @@ async def test_summaries(test_cli_user):
 
     data = rjson['data']
     assert isinstance(data, list)
-    print(data)
-    assert False
+
+    data1 = next(iter(rjson['data']))
+    assert isinstance(data1['grand_total']['total_seconds'], float)
+    assert isinstance(data1['languages'], list)
+    assert isinstance(data1['projects'], list)
