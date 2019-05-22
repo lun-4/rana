@@ -3,6 +3,7 @@
 
 import uuid
 import datetime
+from collections import Counter
 from typing import List, Dict, Any
 
 from quart import Blueprint, request, jsonify, current_app as app
@@ -21,17 +22,70 @@ bp = Blueprint('summaries', __name__)
 def daterange(start_date, delta):
     """Yield dates, making a per-day iteration of the given start date until
     start_date + delta."""
-    for day in range(int(delta.days)):
+    for day in range(int(delta.days) + 1):
         yield start_date + datetime.timedelta(days=day)
+
+
+def _process_durations(durations: List[Dict[str, Any]],
+                       counter_key: str, value_func) -> Counter:
+    counter: Counter = Counter()
+
+    for duration in durations:
+        counter[counter_key] = value_func(duration)
+
+    return counter
+
+
+def _do_summary_list(summary, sum_key: str, counter: Counter,
+                     total_seconds):
+    summary[sum_key] = []
+
+    for name, seconds in counter.most_common():
+        summary[sum_key].append({
+            'name': name,
+            'percent': round(seconds / total_seconds, 2) * 100,
+            'total_seconds': seconds,
+        })
+
+
+def _day_summary_projects(summary: Dict[str, Any],
+                          durations: List[Dict[str, Any]]):
+    projects_counter: Counter = Counter()
+    langs_counter: Counter = Counter()
+    total_seconds = 0
+
+    for duration in durations:
+        duration_secs = duration['end'] - duration['start']
+
+        projects_counter[duration['project']] += duration_secs
+        langs_counter[duration['language']] += duration_secs
+        total_seconds += duration_secs
+
+    summary['grand_total'] = {
+        'total_seconds': total_seconds,
+    }
+
+    # add projects list and languages list
+    _do_summary_list(summary, 'projects', projects_counter, total_seconds)
+    _do_summary_list(summary, 'languages', langs_counter, total_seconds)
+
 
 async def _summary_for_day(user_id, date: datetime.datetime) -> Dict[str, Any]:
     """Generate a summary for the day."""
     summary: Dict[str, Any] = {}
 
+    dur_start = date.timestamp()
+    day_delta = datetime.timedelta(hours=23, minutes=59, seconds=59)
+    dur_end = (date + day_delta).timestamp()
+    durations = await calc_durations(
+        user_id, (dur_start, dur_end), more_raw=True)
+
+    _day_summary_projects(summary, durations)
+
     summary['range'] = {
         'date': f'{date.year}-{date.month}-{date.day}',
-        'start': date,
-        'end': date + datetime.timedelta(hours=23, minutes=59, seconds=59),
+        'start': date.isoformat(),
+        'end': (date + day_delta).isoformat(),
     }
 
     return summary

@@ -20,15 +20,25 @@ def _isofy(posix_tstamp: int) -> str:
     return datetime.datetime.fromtimestamp(posix_tstamp).isoformat()
 
 
-async def calc_durations(user_id: uuid.UUID, spans, *, use_dt=True) -> list:
+def _dur(row):
+    """Duration object from row."""
+    return {
+        'project': row[1],
+        'language': row[2],
+        'start': row[3],
+        'end': row[4],
+    }
+
+
+async def calc_durations(user_id: uuid.UUID, spans, *, more_raw=False) -> list:
     """Iteraively calculate the durations of a given user based
     on the heartbeats."""
     durations_lst: List[Dict[str, Any]] = []
 
     rows = await app.db.fetch("""
-    SELECT s.user_id, s.project, s.started_at, s.ended_at
+    SELECT s.user_id, s.language, s.project, s.started_at, s.ended_at
     FROM (
-        SELECT user_id, project, time AS started_at,
+        SELECT user_id, language, project, time AS started_at,
                (LAG(time) OVER (ORDER BY time DESC)) AS ended_at
         FROM heartbeats
         WHERE user_id = ? and time > ? and time < ?
@@ -45,26 +55,21 @@ async def calc_durations(user_id: uuid.UUID, spans, *, use_dt=True) -> list:
             lat_duration = durations_lst[len(durations_lst) - 1]
 
             # only update if they're equal, effectively merging them
-            if (row[3] - lat_duration['end']) < 600:
-                lat_duration['end'] = row[3]
+            if (row[4] - lat_duration['end']) < 600:
+                lat_duration['end'] = row[4]
             else:
-                durations_lst.append({
-                    'project': row[1],
-                    'start': row[2],
-                    'end': row[3],
-                })
+                durations_lst.append(_dur(row))
         except IndexError:
-            durations_lst.append({
-                'project': row[1],
-                'start': row[2],
-                'end': row[3],
-            })
+            durations_lst.append(_dur(row))
 
     def _convert_duration(dur):
+        if more_raw:
+            return dur
+
         return {
             'project': dur['project'] or 'Other',
-            'start': _isofy(dur['start']) if use_dt else dur['start'],
-            'end': _isofy(dur['end']) if use_dt else dur['end'],
+            'start': _isofy(dur['start']),
+            'end': _isofy(dur['end']),
         }
 
     return list(map(_convert_duration, durations_lst))

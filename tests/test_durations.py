@@ -75,8 +75,8 @@ async def test_durations(test_cli_user):
 @pytest.mark.asyncio
 async def test_summaries(test_cli_user):
     """Test summary generation"""
-    start, end = await do_heartbeats(test_cli_user, 30, project='awoo')
-    start2, end2 = await do_heartbeats(test_cli_user, 30, project='awoo2')
+    start, end = await do_heartbeats(test_cli_user, 10, project='awoo')
+    start2, end2 = await do_heartbeats(test_cli_user, 10, project='awoo2')
 
     now = datetime.datetime.now()
     now_str = f'{now.year}-{now.month}-{now.day}'
@@ -95,3 +95,5 @@ async def test_summaries(test_cli_user):
 
     data = rjson['data']
     assert isinstance(data, list)
+    print(data)
+    assert False
