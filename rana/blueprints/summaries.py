@@ -56,7 +56,7 @@ async def user_summary():
     The max timedelta for a summary is 31 days.
     """
     user_id = await token_check()
-    args = validate(request.args, SUMMARIES_IN)
+    args = validate(dict(request.args), SUMMARIES_IN)
     start_date, end_date = args['start'].date, args['end'].date
 
     if start_date > end_date:
