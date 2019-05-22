@@ -105,3 +105,11 @@ DURATIONS_IN = {
     'project': {'type': 'string', 'required': False},
     'branches': {'type': 'string', 'required': False}
 }
+
+SUMMARIES_IN = {
+    'start': {'coerce': Date, 'required': True, 'nullable': False},
+    'end': {'coerce': Date, 'required': True, 'nullable': False},
+
+    'project': {'type': 'string', 'required': False},
+    'branches': {'type': 'string', 'required': False}
+}

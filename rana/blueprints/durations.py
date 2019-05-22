@@ -20,7 +20,7 @@ def _isofy(posix_tstamp: int) -> str:
     return datetime.datetime.fromtimestamp(posix_tstamp).isoformat()
 
 
-async def calc_durations(user_id: uuid.UUID, spans) -> list:
+async def calc_durations(user_id: uuid.UUID, spans, *, use_dt=True) -> list:
     """Iteraively calculate the durations of a given user based
     on the heartbeats."""
     durations_lst: List[Dict[str, Any]] = []
@@ -63,8 +63,8 @@ async def calc_durations(user_id: uuid.UUID, spans) -> list:
     def _convert_duration(dur):
         return {
             'project': dur['project'] or 'Other',
-            'start': _isofy(dur['start']),
-            'end': _isofy(dur['end']),
+            'start': _isofy(dur['start']) if use_dt else dur['start'],
+            'end': _isofy(dur['end']) if use_dt else dur['end'],
         }
 
     return list(map(_convert_duration, durations_lst))
