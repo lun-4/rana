@@ -23,35 +23,51 @@ def _isofy(posix_tstamp: int) -> str:
 async def calc_durations(user_id: uuid.UUID, spans) -> list:
     """Iteraively calculate the durations of a given user based
     on the heartbeats."""
-    cur_tstamp = spans[0]
-    max_time = spans[1]
     durations_lst: List[Dict[str, Any]] = []
 
-    while True:
-        if cur_tstamp >= spans[1]:
-            break
+    rows = await app.db.fetch("""
+    SELECT s.user_id, s.project, s.started_at, s.ended_at
+    FROM (
+        SELECT user_id, project, time AS started_at,
+               (LAG(time) OVER (ORDER BY time DESC)) AS ended_at
+        FROM heartbeats
+        WHERE user_id = ? and time > ? and time < ?
+        GROUP BY user_id, project, time
+        ORDER BY started_at) AS s
+    WHERE s.ended_at - s.started_at < 600
+    """, user_id, spans[0], spans[1])
 
-        # TODO: this is broken
-        row = await app.db.fetchrow("""
-        select max(time), min(time), project
-        from heartbeats
-        where time > ? and time < ? and user_id = ?
-        group by project
-        limit 1
-        """, cur_tstamp.timestamp(), max_time.timestamp(), user_id)
+    for row in rows:
+        # try to fetch the current latest duration in the list
+        # and if its duration's end equals to the row's start, we
+        # merge the row's end to the duration's end.
+        try:
+            lat_duration = durations_lst[len(durations_lst) - 1]
 
-        if row is None:
-            break
+            # only update if they're equal, effectively merging them
+            if (row[3] - lat_duration['end']) < 600:
+                lat_duration['end'] = row[3]
+            else:
+                durations_lst.append({
+                    'project': row[1],
+                    'start': row[2],
+                    'end': row[3],
+                })
+        except IndexError:
+            durations_lst.append({
+                'project': row[1],
+                'start': row[2],
+                'end': row[3],
+            })
 
-        durations_lst.append({
-            'start': _isofy(row[0]),
-            'end': _isofy(row[1]),
-            'project': row[2],
-        })
+    def _convert_duration(dur):
+        return {
+            'project': dur['project'],
+            'start': _isofy(dur['start']),
+            'end': _isofy(dur['end']),
+        }
 
-        cur_tstamp = datetime.datetime.fromtimestamp(row[0])
-
-    return durations_lst
+    return list(map(_convert_duration, durations_lst))
 
 
 async def durations(user_id: uuid.UUID, args: dict):
@@ -64,8 +80,8 @@ async def durations(user_id: uuid.UUID, args: dict):
 
     return jsonify(durations_lst, extra={
         'branches': ['master'],
-        'start': spans[0].isoformat(),
-        'end': spans[1].isoformat(),
+        'start': _isofy(spans[0]),
+        'end': _isofy(spans[1]),
     })
 
 

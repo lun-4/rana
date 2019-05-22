@@ -19,13 +19,14 @@ class Date:
         self.date = datetime.datetime(year, month, day)
 
     @property
-    def timespans(self) -> Tuple[datetime.datetime, datetime.datetime]:
-        """Return the start and end timestamp for the given date.
+    def timespans(self) -> Tuple[float, float]:
+        """Return the start and end POSIX timestamp for the given date.
 
         The given datetime objects should have a timedelta of approximately
         24 hours.
         """
-        return self.date, self.date + datetime.timedelta(hours=23, minutes=59)
+        end_ts = self.date + datetime.timedelta(hours=23, minutes=59)
+        return self.date.timestamp(), end_ts.timestamp()
 
 
 

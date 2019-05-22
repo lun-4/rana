@@ -105,7 +105,7 @@ class Database:
         """Execute a query and return the list of rows."""
         cur = self.conn.cursor()
         cur.execute(query, args)
-        return cur.fetchrows()
+        return cur.fetchall()
 
     async def fetchrow(self, query, *args):
         """Execute a query and return a single result row."""
