@@ -27,7 +27,7 @@ async def test_heartbeats(test_cli_user):
 @pytest.mark.asyncio
 async def test_durations(test_cli_user):
     """Test if given"""
-    # create 5 minutes
+    # create 10 minutes duration manually
     for n in range(10):
         resp = await test_cli_user.post(
             '/api/v1/users/current/heartbeats', json={

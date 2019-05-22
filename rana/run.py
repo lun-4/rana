@@ -74,6 +74,7 @@ async def app_after_serving():
 async def rana_error_handler(exception: RanaError):
     """Exception handler to convert RanaError exceptions into the proper
     JSON body + status code."""
+    log.warning(f'err: {exception!r}')
     return jsonify({
         'error': exception.message
     }), exception.status_code

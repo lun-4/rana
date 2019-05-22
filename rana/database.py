@@ -83,7 +83,7 @@ class Database:
     def __init__(self, app):
         self.app = app
         self.conn = sqlite3.connect(
-            'rana.db' if app._testing else 'rana-test.db')
+            'rana.db' if not app._testing else 'rana-test.db')
         sqlite3.register_adapter(uuid.UUID, str)
         app.conn = self.conn
         self.setup_tables()
