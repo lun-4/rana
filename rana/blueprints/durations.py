@@ -42,7 +42,7 @@ async def calc_durations(user_id: uuid.UUID, spans, *, more_raw=False) -> list:
                (LAG(time) OVER (ORDER BY time DESC)) AS ended_at
         FROM heartbeats
         WHERE user_id = ? and time > ? and time < ?
-        GROUP BY user_id, project, time
+        GROUP BY project, time
         ORDER BY started_at) AS s
     WHERE s.ended_at - s.started_at < 600
     """, user_id, spans[0], spans[1])
@@ -54,8 +54,14 @@ async def calc_durations(user_id: uuid.UUID, spans, *, more_raw=False) -> list:
         try:
             lat_duration = durations_lst[len(durations_lst) - 1]
 
-            # only update if they're equal, effectively merging them
-            if (row[4] - lat_duration['end']) < 600:
+            # only update the latest duration if:
+            # - the incoming row matches in project name, and
+            # - if the incoming row is at MOST 10 minutes separated
+            #   from the latest duration
+            is_same_project = row[2] == lat_duration['project']
+            is_mergeable = (row[3] - lat_duration['end']) < 600
+
+            if is_same_project and is_mergeable:
                 lat_duration['end'] = row[4]
             else:
                 durations_lst.append(_dur(row))

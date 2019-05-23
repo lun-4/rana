@@ -13,17 +13,20 @@ from rana.utils import jsonify as jsonify
 bp = Blueprint('heartbeats', __name__)
 
 
-async def fetch_machine(user_id) -> uuid.UUID:
+async def fetch_machine(user_id, mach_name=None, *, app_=None) -> uuid.UUID:
     """Return the Machine ID for the given request.
     Creates a new machine for the given user if the given
     X-Machine-Name value is new.
     """
-    try:
-        mach_name = request.headers['x-machine-name']
-    except KeyError:
-        mach_name = 'root'
+    app_ = app_ or app
 
-    mach_id = await app.db.fetchval("""
+    if mach_name is None:
+        try:
+            mach_name = request.headers['x-machine-name']
+        except KeyError:
+            mach_name = 'root'
+
+    mach_id = await app_.db.fetchval("""
     select id from machines where name = ? and user_id = ?
     """, mach_name, user_id)
 
@@ -32,7 +35,7 @@ async def fetch_machine(user_id) -> uuid.UUID:
 
     mach_id = uuid.uuid4()
 
-    await app.db.execute("""
+    await app_.db.execute("""
     insert into machines (id, user_id, name)
     values (?, ?, ?)
     """, mach_id, user_id, mach_name)
@@ -53,7 +56,9 @@ def lang_from_ext(extension: str) -> Optional[str]:
     return EXTENSIONS.get(extension)
 
 
-async def _process_hb(user_id, machine_id, heartbeat):
+async def process_hb(user_id, machine_id, heartbeat, *, app_=None):
+    """Add a heartbeat."""
+    app_ = app_ or app
     heartbeat_id = uuid.uuid4()
 
     if heartbeat.get('language') is None and heartbeat.get('type') == 'file':
@@ -66,7 +71,7 @@ async def _process_hb(user_id, machine_id, heartbeat):
 
         heartbeat['language'] = lang_from_ext(path.suffix)
 
-    await app.db.execute(
+    await app_.db.execute(
         """
         insert into heartbeats (id, user_id, machine_id,
             entity, type, category, time,
@@ -84,7 +89,7 @@ async def _process_hb(user_id, machine_id, heartbeat):
         heartbeat['branch'], heartbeat['language'], heartbeat['lines'],
         heartbeat['lineno'], heartbeat['cursorpos'])
 
-    return await app.db.fetch_heartbeat_simple(heartbeat_id)
+    return await app_.db.fetch_heartbeat_simple(heartbeat_id)
 
 
 @bp.route('/current/heartbeats', methods=['POST'])
@@ -94,7 +99,7 @@ async def post_heartbeat():
     j = validate(raw_json, HEARTBEAT_MODEL)
 
     machine_id = await fetch_machine(user_id)
-    heartbeat = await _process_hb(user_id, machine_id, j)
+    heartbeat = await process_hb(user_id, machine_id, j)
     return jsonify(heartbeat), 201
 
 
@@ -121,7 +126,7 @@ async def post_many_heartbeats():
     res = []
     for heartbeat in j:
         res.append(
-            await _process_hb(user_id, machine_id, heartbeat)
+            await process_hb(user_id, machine_id, heartbeat)
         )
 
     return qjsonify({
