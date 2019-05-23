@@ -27,7 +27,7 @@ def uuid_(identifier: Optional[str]) -> Optional[str]:
 SQL_SETUP_SCRIPT = """
 create table if not exists users (
     id text primary key,
-    username text not null,
+    username text unique not null,
     password_hash text not null,
     timezone text not null default 'Etc/GMT0',
 

@@ -49,17 +49,31 @@ async def _extract_userpass(tmpl):
     except (KeyError, IndexError):
         return await tmpl(error='username or password not provided')
 
-    return username, password
+    try:
+        signup_code = data['signup_code'][0]
+    except (KeyError, IndexError):
+        signup_code = ''
+
+    return username, password, signup_code
 
 
 @bp.route('/signup', methods=['GET', 'POST'])
 async def signup_handler():
     """Handle a signup for a user."""
+    signup_allowed = app.cfg['rana']['signups']
+
     res = await _extract_userpass(_signup_tmpl)
     if not isinstance(res, tuple):
         return res
 
-    username, password = res
+    # unpack formdata into what we want
+    username, password, signup_code = res
+
+    # check signup state
+    if not signup_allowed and signup_code != app.cfg['rana']['signup_code']:
+        raise Unauthorized('Signup code is invalid.')
+    elif not signup_allowed:
+        return 'signups are disabled in this instance', 415
 
     existing = await app.db.fetchrow("""
     select id from users where username = ?

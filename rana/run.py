@@ -1,6 +1,8 @@
 import logging
 import secrets
 
+from configparser import ConfigParser
+
 from quart import Quart, jsonify
 
 from rana.blueprints import (
@@ -16,6 +18,10 @@ def make_app() -> Quart:
     """Return the app instance."""
     app_ = Quart(__name__)
     app_._testing = False
+
+    app_.cfg = ConfigParser()
+    app_.cfg.read('config.ini')
+
     logging.basicConfig(level=logging.DEBUG)
     return app_
 

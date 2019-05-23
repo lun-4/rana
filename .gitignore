@@ -130,3 +130,5 @@ rana-test.db-journal
 
 .secret_app_key
 temp-plot.html
+
+config.ini
