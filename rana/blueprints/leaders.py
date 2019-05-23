@@ -11,7 +11,7 @@ from typing import List, Dict, Any
 from quart import Blueprint, request, current_app as app
 
 from rana.auth import token_check
-from rana.utils import jsonify, index_by_func
+from rana.utils import jsonify
 from rana.models import validate, LEADERS_IN
 
 from rana.blueprints.durations import durations_from_rows
