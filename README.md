@@ -3,11 +3,6 @@ rana
 
 reverse engineering wakatime for fun
 
-## notes
-
-there is no timezone gathering, this decision is intentional. all times
-displayed in the API are in UTC.
-
 ## how do
 
 ```
