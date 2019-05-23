@@ -2,8 +2,18 @@
     <head>
     </head>
     <body>
+        <script src="js/rana.js"></script>
+        <script src="https://d3js.org/d3.v5.min.js"></script>
+
+        <script type="javascript">
+            window.rana = new RanaClient("{{ session['api_key'] }}");
+        </script>
+        <script src="js/dashboard.js"></script>
+
         <h1>logged in as {{ session['username'] }}</h1>
         <h2>your api key is {{ session['api_key'] }}</h2>
+
+        <div id="graph"></div>
 
         <a href="revoke_api_key">click here to reset your api key</a>
         <p><a href="logout">click here to logout</a></p>

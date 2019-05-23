@@ -1,4 +1,4 @@
-from quart import Blueprint, current_app as app, render_template_string
+from quart import Blueprint, render_template_string, static
 from pathlib import Path
 
 bp = Blueprint('index', __name__)
@@ -10,12 +10,12 @@ async def static_pages(path):
     if '..' in path:
         return 'no', 404
 
-    static_path = Path.cwd() / Path('static') / path
-    return await app.send_static_file(str(static_path))
+    return await static.send_from_directory('static', path)
 
 
 @bp.route('/')
 @bp.route('/api')
+@bp.route('/api/v1')
 async def index_handler():
     """Handler for the index page."""
     index_path = Path.cwd() / Path('static') / 'index.html'
