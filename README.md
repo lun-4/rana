@@ -19,6 +19,8 @@ pipenv install
 pipenv run hypercorn --access-log - rana.run:app --bind 0.0.0.0:8000
 ```
 
+*todo: configuration of instances (e.g disable signups)*
+
 then nginx or something
 
 ```nginx
@@ -35,6 +37,14 @@ server {
     }
 }
 ```
+
+### api keys
+
+your wakatime API keys won't work on a rana instance. go to
+`instance.tld/signup` to well, signup. then login via `/login`, api keys are
+displayed on dashboard.
+
+there is no "recover account" or update username mechanism as of right now.
 
 ## how to link editors to your rana instance
 
