@@ -95,7 +95,8 @@ async def test_durations(test_cli_user):
 async def test_summaries(test_cli_user):
     """Test summary generation"""
     start, end = await do_heartbeats(test_cli_user, 10, project='awoo')
-    start2, end2 = await do_heartbeats(test_cli_user, 9, project='awoo2', start=end + datetime.timedelta(minutes=15))
+    start2, end2 = await do_heartbeats(test_cli_user, 9, project='awoo2',
+        start=end + datetime.timedelta(minutes=5))
 
     now = datetime.datetime.now()
     now_str = f'{now.year}-{now.month}-{now.day}'
