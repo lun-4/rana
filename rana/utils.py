@@ -1,5 +1,6 @@
 import datetime
-from typing import Any, Dict, Tuple
+import pprint
+from typing import Any, Dict, Tuple, Sequence, Optional
 from quart import jsonify as quart_jsonify
 
 
@@ -37,4 +38,15 @@ def jsonify(data: Any, *, extra=None) -> Dict[str, Any]:
     """
     extra = extra or {}
     extra['data'] = data
+    pprint.pprint(extra)
     return quart_jsonify(extra)
+
+
+def index_by_func(function, indexable: Sequence[Any]) -> Optional[int]:
+    """Search in an idexable and return the index number
+    for an iterm that has func(item) = True."""
+    for index, item in enumerate(indexable):
+        if function(item):
+            return index
+
+    return None
