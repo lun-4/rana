@@ -113,3 +113,8 @@ SUMMARIES_IN = {
     'project': {'type': 'string', 'required': False},
     'branches': {'type': 'string', 'required': False}
 }
+
+LEADERS_IN = {
+    'language': {'type': 'string', 'required': False},
+    'page': {'coerce': int, 'required': False, 'default': 0},
+}

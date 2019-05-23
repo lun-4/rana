@@ -20,32 +20,24 @@ def _isofy(posix_tstamp: int) -> str:
     return datetime.datetime.fromtimestamp(posix_tstamp).isoformat()
 
 
-def _dur(row):
+def _dur(row, do_user=False):
     """Duration object from row."""
-    return {
+    duration = {
         'language': row[1],
         'project': row[2],
         'start': row[3],
         'end': row[4],
     }
 
+    if do_user:
+        duration['user_id'] = row[0]
 
-async def calc_durations(user_id: uuid.UUID, spans, *, more_raw=False) -> list:
-    """Iteraively calculate the durations of a given user based
-    on the heartbeats."""
+    return duration
+
+
+def durations_from_rows(rows, *, do_user=False) -> List[Dict[str, Any]]:
+    """Make a list of durations out of a list of heartbeats."""
     durations_lst: List[Dict[str, Any]] = []
-
-    rows = await app.db.fetch("""
-    SELECT s.user_id, s.language, s.project, s.started_at, s.ended_at
-    FROM (
-        SELECT user_id, language, project, time AS started_at,
-               (LAG(time) OVER (ORDER BY time DESC)) AS ended_at
-        FROM heartbeats
-        WHERE user_id = ? and time > ? and time < ?
-        GROUP BY project, time
-        ORDER BY started_at) AS s
-    WHERE s.ended_at - s.started_at < 600
-    """, user_id, spans[0], spans[1])
 
     for row in rows:
         # try to fetch the current latest duration in the list
@@ -64,9 +56,30 @@ async def calc_durations(user_id: uuid.UUID, spans, *, more_raw=False) -> list:
             if is_same_project and is_mergeable:
                 lat_duration['end'] = row[4]
             else:
-                durations_lst.append(_dur(row))
+                durations_lst.append(_dur(row, do_user))
         except IndexError:
-            durations_lst.append(_dur(row))
+            durations_lst.append(_dur(row, do_user))
+
+    return durations_lst
+
+
+async def calc_durations(user_id: uuid.UUID, spans, *,
+                         more_raw=False) -> list:
+    """Iteraively calculate the durations of a given user based
+    on the heartbeats."""
+    rows = await app.db.fetch(f"""
+    SELECT s.user_id, s.language, s.project, s.started_at, s.ended_at
+    FROM (
+        SELECT user_id, language, project, time AS started_at,
+               (LAG(time) OVER (ORDER BY time DESC)) AS ended_at
+        FROM heartbeats
+        WHERE user_id = ? and time > ? and time < ?
+        GROUP BY project, time
+        ORDER BY started_at) AS s
+    WHERE s.ended_at - s.started_at < 600
+    """, user_id, spans[0], spans[1])
+
+    durations_lst = durations_from_rows(rows)
 
     def _convert_duration(dur):
         if more_raw:

@@ -4,7 +4,7 @@ import secrets
 from quart import Quart, jsonify
 
 from rana.blueprints import (
-    auth, users, heartbeats, index, durations, summaries
+    auth, users, heartbeats, index, durations, summaries, leaders
 )
 from rana.errors import RanaError
 from rana.database import Database
@@ -30,6 +30,8 @@ def setup_blueprints(app_):
         heartbeats: '/users',
         durations: '/users',
         summaries: '/users',
+
+        leaders: '/leaders',
     }
 
     for bpr, suffix in bps.items():

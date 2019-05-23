@@ -138,7 +138,8 @@ class Database:
 
     async def fetch_user(self, user_id: uuid.UUID) -> Optional[dict]:
         """Fetch a single user and return the dictionary
-        representing the API view of them."""
+        representing the API view of them.
+        """
         row = await self.fetchrow("""
         select
             id, username, display_name, website, created_at, modified_at,
@@ -190,6 +191,24 @@ class Database:
             user['human_readable_website'] = user['website'].lstrip('https://')
 
         return user
+
+    async def fetch_user_simple(self, user_id: uuid.UUID) -> Optional[dict]:
+        """Fetch a single simple view user."""
+        row = await self.fetchrow("""
+        select
+            id, username, display_name, website
+        from users where id = ?
+        """, user_id)
+
+        if not row:
+            return None
+
+        return {
+            'id': uuid_(row[0]),
+            'username': row[1],
+            'display_name': row[2],
+            'website': row[3],
+        }
 
     async def fetch_heartbeat(self, heartbeat_id: uuid.UUID) -> Optional[dict]:
         """Fetch a single heartbeat."""
