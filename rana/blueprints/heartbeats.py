@@ -1,6 +1,6 @@
 import uuid
 import pathlib
-import datetime
+import logging
 from typing import Optional
 
 from quart import Blueprint, request, jsonify as qjsonify, current_app as app
@@ -10,6 +10,7 @@ from rana.errors import BadRequest
 from rana.models import validate, HEARTBEAT_MODEL
 from rana.utils import jsonify as jsonify
 
+log = logging.getLogger(__name__)
 bp = Blueprint('heartbeats', __name__)
 
 
@@ -60,6 +61,10 @@ async def process_hb(user_id, machine_id, heartbeat, *, app_=None):
     """Add a heartbeat."""
     app_ = app_ or app
     heartbeat_id = uuid.uuid4()
+
+    log.debug('heartbeat %r: uid=%r entity=%r lang=%r',
+              heartbeat_id, user_id, heartbeat['entity'],
+              heartbeat['language'])
 
     if heartbeat.get('language') is None and heartbeat.get('type') == 'file':
         entity_path = heartbeat['entity']
@@ -122,6 +127,7 @@ async def post_many_heartbeats():
     })['hbs']
 
     machine_id = await fetch_machine(user_id)
+    log.debug('adding %d heartbeats', len(j))
 
     res = []
     for heartbeat in j:
