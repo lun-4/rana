@@ -174,4 +174,4 @@ async def revoke_api_key():
 async def logout_handler():
     session['username'] = ''
     session['api_key'] = ''
-    return await _any_tmpl('index.html')
+    return redirect('/')
