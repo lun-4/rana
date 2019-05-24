@@ -78,10 +78,10 @@ async def signup_handler():
     username, password, signup_code = res
 
     # check signup state
-    if not signup_allowed and signup_code != app.cfg['rana']['signup_code']:
-        raise Unauthorized('Signup code is invalid.')
-    elif not signup_allowed:
-        return 'signups are disabled in this instance', 415
+    if not signup_allowed:
+        if signup_code != app.cfg['rana']['signup_code']:
+            raise Unauthorized(
+                'Signups are disabled and the signup code is invalid.')
 
     existing = await app.db.fetchrow("""
     select id from users where username = ?
