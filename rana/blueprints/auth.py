@@ -119,7 +119,7 @@ async def login_handler():
     if not isinstance(res, tuple):
         return res
 
-    username, password = res
+    username, password, _ = res
     user_id = await login(username, password)
 
     orig_username = await app.db.fetchval("""
