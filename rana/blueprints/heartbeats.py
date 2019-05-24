@@ -62,10 +62,6 @@ async def process_hb(user_id, machine_id, heartbeat, *, app_=None):
     app_ = app_ or app
     heartbeat_id = uuid.uuid4()
 
-    log.debug('heartbeat %r: uid=%r entity=%r lang=%r',
-              heartbeat_id, user_id, heartbeat['entity'],
-              heartbeat['language'])
-
     if heartbeat.get('language') is None and heartbeat.get('type') == 'file':
         entity_path = heartbeat['entity']
 
@@ -75,6 +71,23 @@ async def process_hb(user_id, machine_id, heartbeat, *, app_=None):
             path = pathlib.PurePosixPath(entity_path)
 
         heartbeat['language'] = lang_from_ext(path.suffix)
+
+    existing_hb = await app_.db.fetchval("""
+    select id from heartbeats
+    where entity = ? and (time - ?) < 60
+    limit 1
+    """, heartbeat['entity'], heartbeat['time'])
+
+    if existing_hb:
+        existing = await app_.db.fetch_heartbeat_simple(existing_hb)
+        log.debug('found close heartbeat: %r %r dt=%r',
+                  existing['time'], heartbeat['time'],
+                  existing['time'] - heartbeat['time'])
+        return existing
+
+    log.debug('add heartbeat %r: uid=%r entity=%r lang=%r',
+              heartbeat_id.hex, user_id.hex, heartbeat['entity'],
+              heartbeat['language'])
 
     await app_.db.execute(
         """
