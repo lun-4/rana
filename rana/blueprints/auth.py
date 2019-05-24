@@ -62,6 +62,14 @@ async def signup_handler():
     """Handle a signup for a user."""
     signup_allowed = app.cfg['rana']['signups']
 
+    signup_code = app.cfg['rana']['signup_code']
+
+    # configparser will give us an empty string when the key isn't set
+    # so we set it to a value that isn't possible to achieve on the request
+    # args. None fills up that purpose.
+    if not signup_code:
+        signup_code = None
+
     res = await _extract_userpass(_signup_tmpl)
     if not isinstance(res, tuple):
         return res
