@@ -2,6 +2,7 @@
 # https://wakatime.com/developers#durations
 
 import uuid
+import logging
 import datetime
 from typing import List, Dict, Any
 
@@ -12,6 +13,7 @@ from rana.utils import jsonify
 from rana.models import validate, DURATIONS_IN
 from rana.database import timestamp_
 
+log = logging.getLogger(__name__)
 bp = Blueprint('durations', __name__)
 
 
@@ -67,6 +69,8 @@ async def calc_durations(user_id: uuid.UUID, spans, *,
                          more_raw=False) -> list:
     """Iteraively calculate the durations of a given user based
     on the heartbeats."""
+    log.debug('calculating durations for uid %r, span0 %r, span1 %r');
+
     rows = await app.db.fetch(f"""
     SELECT s.user_id, s.language, s.project, s.started_at, s.ended_at
     FROM (
