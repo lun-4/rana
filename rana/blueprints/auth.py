@@ -84,7 +84,7 @@ async def signup_handler():
                 'Signups are disabled and the signup code is invalid.')
 
     existing = await app.db.fetchrow("""
-    select id from users where username = ?
+    select id from users where username = $1
     """, username)
 
     if existing is not None:
@@ -97,12 +97,12 @@ async def signup_handler():
 
     await app.db.execute("""
     insert into users (id, username, password_hash, created_at)
-    values (?, ?, ?, ?)
+    values ($1, $2, $3, $4)
     """, user_id, username, pwd_hash, time.time())
 
     await app.db.execute("""
     insert into api_keys (user_id, key)
-    values (?, ?)
+    values ($1, $2)
     """, user_id, api_key)
 
     return redirect('/login')
@@ -123,11 +123,11 @@ async def login_handler():
     user_id = await login(username, password)
 
     orig_username = await app.db.fetchval("""
-    select username from users where id = ?
+    select username from users where id = $1
     """, user_id)
 
     api_key = await app.db.fetchval("""
-    select key from api_keys where user_id = ?
+    select key from api_keys where user_id = $1
     """, user_id)
 
     session['username'] = orig_username
@@ -143,7 +143,7 @@ async def dashboard_handler():
         return redirect('/login')
 
     user_id = await app.db.fetchval("""
-    select user_id from api_keys where key = ?
+    select user_id from api_keys where key = $1
     """, key)
 
     if user_id is None:
@@ -163,7 +163,7 @@ async def revoke_api_key():
     new_api_key = uuid.uuid4()
 
     await app.db.execute("""
-    update api_keys set key = ? where key = ?
+    update api_keys set key = $2 where key = $1
     """, old_api_key, new_api_key)
 
     session['api_key'] = new_api_key

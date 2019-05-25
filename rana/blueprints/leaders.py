@@ -33,7 +33,7 @@ async def calc_leaders(language=None):
     end = utcnow
 
     args = [language] if language else []
-    lang_clause = 'and language = ?' if language else ''
+    lang_clause = 'and language = $3' if language else ''
 
     rows = await app.db.fetch(f"""
     SELECT s.user_id, s.language, s.project, s.started_at, s.ended_at
@@ -41,7 +41,7 @@ async def calc_leaders(language=None):
         SELECT user_id, language, project, time AS started_at,
                (LAG(time) OVER (ORDER BY time DESC)) AS ended_at
         FROM heartbeats
-        WHERE time > ? and time < ? {lang_clause}
+        WHERE time > $1 and time < $2 {lang_clause}
         GROUP BY user_id, project, time
         ORDER BY started_at) AS s
     WHERE s.ended_at - s.started_at < 600

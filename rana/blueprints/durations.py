@@ -78,7 +78,7 @@ async def calc_durations(user_id: uuid.UUID, spans, *,
         SELECT user_id, language, project, time AS started_at,
                (LAG(time) OVER (ORDER BY time DESC)) AS ended_at
         FROM heartbeats
-        WHERE user_id = ? and time > ? and time < ?
+        WHERE user_id = $1 and time > $2 and time < $3
         GROUP BY project, time
         ORDER BY started_at) AS s
     WHERE s.ended_at - s.started_at < 600

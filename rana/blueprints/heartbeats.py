@@ -28,7 +28,7 @@ async def fetch_machine(user_id, mach_name=None, *, app_=None) -> uuid.UUID:
             mach_name = 'root'
 
     mach_id = await app_.db.fetchval("""
-    select id from machines where name = ? and user_id = ?
+    select id from machines where name = $1 and user_id = $2
     """, mach_name, user_id)
 
     if mach_id is not None:
@@ -38,7 +38,7 @@ async def fetch_machine(user_id, mach_name=None, *, app_=None) -> uuid.UUID:
 
     await app_.db.execute("""
     insert into machines (id, user_id, name)
-    values (?, ?, ?)
+    values ($1, $2, $3)
     """, mach_id, user_id, mach_name)
 
     return mach_id
@@ -74,7 +74,7 @@ async def process_hb(user_id, machine_id, heartbeat, *, app_=None):
 
     existing_hb = await app_.db.fetchval("""
     select id from heartbeats
-    where entity = ? and (time - ?) > -60
+    where entity = $1 and abs(($2 - time)::bigint) < 60
     limit 1
     """, heartbeat['entity'], heartbeat['time'])
 
@@ -95,11 +95,11 @@ async def process_hb(user_id, machine_id, heartbeat, *, app_=None):
             entity, type, category, time,
             is_write, project, branch, language, lines, lineno, cursorpos)
         values
-            (?, ?, ?,
-             ?, ?, ?,
-             ?, ?, ?,
-             ?, ?, ?,
-             ?, ?)
+            ($1, $2, $3,
+             $4, $5, $6,
+             $7, $8, $9,
+             $10, $11, $12,
+             $13, $14)
         """,
         heartbeat_id, user_id, machine_id,
         heartbeat['entity'], heartbeat['type'], heartbeat['category'],
