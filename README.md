@@ -7,13 +7,17 @@ reverse engineering wakatime for fun
 
  - python 3.7
  - pipenv (`python3 -m pip install -U pipenv`)
- - sqlite
+ - postgresql
 
 note: this is rudimentary software. db migrations, if required, won't
 be automatic.
 
 ```bash
 pipenv install
+
+# db setup can be so different between postgresql installations.
+# db credentials go to config.ini
+cp config.example.ini config.ini
 
 # you can put any port really i wont force you
 pipenv run hypercorn --access-log - rana.run:app --bind 0.0.0.0:8000

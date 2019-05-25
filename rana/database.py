@@ -1,8 +1,10 @@
 import datetime
 import logging
-import sqlite3
 import uuid
+import asyncio
 from typing import Optional
+
+import asyncpg
 
 log = logging.getLogger()
 
@@ -26,7 +28,7 @@ def uuid_(identifier: Optional[str]) -> Optional[str]:
 
 SQL_SETUP_SCRIPT = """
 create table if not exists users (
-    id text primary key,
+    id uuid primary key,
     username text unique not null,
     password_hash text not null,
     timezone text not null default 'Etc/GMT0',
@@ -47,20 +49,20 @@ create table if not exists users (
 );
 
 create table if not exists api_keys (
-    user_id bigint primary key references users (id),
+    user_id uuid primary key references users (id),
     key text not null
 );
 
 create table if not exists machines (
-    id text primary key,
-    user_id text references users (id),
+    id uuid primary key,
+    user_id uuid references users (id),
     name text
 );
 
 create table if not exists heartbeats (
-    id text primary key,
-    user_id text references users (id),
-    machine_id text references machines (id),
+    id uuid primary key,
+    user_id uuid references users (id),
+    machine_id uuid references machines (id),
 
     entity text not null,
     type text not null,
@@ -82,59 +84,39 @@ class Database:
     """Main database class."""
     def __init__(self, app):
         self.app = app
-        self.conn = sqlite3.connect(
-            'rana.db' if not app._testing else 'rana-test.db')
-        sqlite3.register_adapter(uuid.UUID, str)
-        app.conn = self.conn
-        self.setup_tables()
+        asyncio.ensure_future(self.init(app))
 
-    def setup_tables(self):
+    async def init(self, app):
         """Create basic tables."""
-        self.conn.executescript(SQL_SETUP_SCRIPT)
-        self.conn.commit()
+        self.conn = await asyncpg.create_pool(**dict(app.cfg['rana:database']))
+        app.conn = self.conn
+        await self.conn.execute(SQL_SETUP_SCRIPT)
 
     async def close(self):
         """Close the database."""
         log.debug('closing db')
-        self.conn.commit()
-
-        # weird things happen when i'm unconditionally
-        # calling close() when testing.
-        if not self.app._testing:
-            self.conn.close()
+        await self.conn.close()
 
     async def fetch(self, query, *args):
         """Execute a query and return the list of rows."""
-        cur = self.conn.cursor()
-        cur.execute(query, args)
-        return cur.fetchall()
+        return await self.conn.fetch(query, *args)
 
     async def fetchrow(self, query, *args):
         """Execute a query and return a single result row."""
-        cur = self.conn.cursor()
-        cur.execute(query, args)
-        return cur.fetchone()
+        return await self.conn.fetchrow(query, *args)
 
     async def fetchval(self, query, *args):
         """Execute a query and return the first value of the row."""
-        cur = self.conn.cursor()
-        cur.execute(query, args)
-
-        row = cur.fetchone()
-        if row is None:
-            return row
-
-        return row[0]
+        return await self.conn.fetchval(query, *args)
 
     async def execute(self, query, *args):
         """Execute SQL."""
-        self.conn.execute(query, args)
-        self.conn.commit()
+        return await self.conn.execute(query, *args)
 
     async def fetch_user_tz(self, user_id: uuid.UUID) -> Optional[str]:
         """Fetch a user's configured timezone."""
         return await self.fetchval(
-            'select timezone from users where id = ?', user_id)
+            'select timezone from users where id = $1', user_id)
 
     async def fetch_user(self, user_id: uuid.UUID) -> Optional[dict]:
         """Fetch a single user and return the dictionary
@@ -145,7 +127,7 @@ class Database:
             id, username, display_name, website, created_at, modified_at,
             last_heartbeat_at, last_plugin, last_plugin_name, last_project,
             timezone
-        from users where id = ?
+        from users where id = $1
         """, user_id)
 
         if not row:
@@ -197,7 +179,7 @@ class Database:
         row = await self.fetchrow("""
         select
             id, username, display_name, website
-        from users where id = ?
+        from users where id = $1
         """, user_id)
 
         if not row:
@@ -216,7 +198,7 @@ class Database:
         row = await self.fetchrow("""
         select
             id, entity, type, category, time, project, language
-        from heartbeats where id = ?
+        from heartbeats where id = $1
         """, heartbeat_id)
 
         if not row:
@@ -240,7 +222,7 @@ class Database:
         row = await self.fetchrow("""
         select
             id, entity, type, time, project
-        from heartbeats where id = ?
+        from heartbeats where id = $1
         """, heartbeat_id)
 
         if not row:

@@ -12,6 +12,7 @@ python-dateutil = "*"
 bcrypt = "*"
 quart = "*"
 cerberus = "*"
+asyncpg = "*"
 
 [requires]
 python_version = "3.7"

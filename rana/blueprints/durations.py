@@ -69,7 +69,8 @@ async def calc_durations(user_id: uuid.UUID, spans, *,
                          more_raw=False) -> list:
     """Iteraively calculate the durations of a given user based
     on the heartbeats."""
-    log.debug('calculating durations for uid %r, span0 %r, span1 %r');
+    log.debug('calculating durations for uid %r, span0 %r, span1 %r',
+              user_id, spans[0], spans[1])
 
     rows = await app.db.fetch(f"""
     SELECT s.user_id, s.language, s.project, s.started_at, s.ended_at
