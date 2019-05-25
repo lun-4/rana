@@ -74,7 +74,7 @@ async def process_hb(user_id, machine_id, heartbeat, *, app_=None):
 
     existing_hb = await app_.db.fetchval("""
     select id from heartbeats
-    where entity = ? and (time - ?) < 60
+    where entity = ? and (time - ?) > -60
     limit 1
     """, heartbeat['entity'], heartbeat['time'])
 
