@@ -103,7 +103,7 @@ async def signup_handler():
     await app.db.execute("""
     insert into api_keys (user_id, key)
     values ($1, $2)
-    """, user_id, api_key)
+    """, user_id, str(api_key))
 
     return redirect('/login')
 
@@ -144,7 +144,7 @@ async def dashboard_handler():
 
     user_id = await app.db.fetchval("""
     select user_id from api_keys where key = $1
-    """, key)
+    """, str(key))
 
     if user_id is None:
         return redirect('/login')
@@ -164,7 +164,7 @@ async def revoke_api_key():
 
     await app.db.execute("""
     update api_keys set key = $2 where key = $1
-    """, old_api_key, new_api_key)
+    """, str(old_api_key), str(new_api_key))
 
     session['api_key'] = new_api_key
     return await _dashboard_tmpl()

@@ -18,12 +18,12 @@ def timestamp_(tstamp: Optional[int]) -> Optional[str]:
     return dtm.isoformat()
 
 
-def uuid_(identifier: Optional[str]) -> Optional[str]:
+def uuid_(identifier: Optional[uuid.UUID]) -> Optional[str]:
     """Return a json-friendly version of a given UUID string."""
     if identifier is None:
         return None
 
-    return str(uuid.UUID(identifier))
+    return str(identifier)
 
 
 SQL_SETUP_SCRIPT = """
@@ -84,6 +84,7 @@ class Database:
     """Main database class."""
     def __init__(self, app):
         self.app = app
+        self.conn = None
         asyncio.ensure_future(self.init(app))
 
     async def init(self, app):
@@ -95,7 +96,8 @@ class Database:
     async def close(self):
         """Close the database."""
         log.debug('closing db')
-        await self.conn.close()
+        if self.conn:
+            await self.conn.close()
 
     async def fetch(self, query, *args):
         """Execute a query and return the list of rows."""
