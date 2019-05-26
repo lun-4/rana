@@ -92,6 +92,7 @@ async def calc_durations(user_id: uuid.UUID, spans, *,
 
         return {
             'project': dur['project'] or 'Other',
+            'language': dur['language'] or 'Other',
             'start': _isofy(dur['start']),
             'end': _isofy(dur['end']),
         }
