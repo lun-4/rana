@@ -55,7 +55,7 @@ def _day_summary_projects(summary: Dict[str, Any],
     total_seconds = 0
 
     for duration in durations:
-        duration_secs = duration['end'] - duration['start']
+        duration_secs = (duration['end'] - duration['start']).total_seconds()
 
         projects_counter[duration['project']] += duration_secs
         langs_counter[duration['language']] += duration_secs
