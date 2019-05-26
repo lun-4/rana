@@ -45,16 +45,8 @@ async def fetch_machine(user_id, mach_name=None, *, app_=None) -> uuid.UUID:
 
 
 EXTENSIONS = {
-    'zig': 'Zig',
+    '.zig': 'Zig',
 }
-
-
-def lang_from_ext(extension: str) -> Optional[str]:
-    """Return a heartbeat language out of its extension.
-
-    Used to give results for languages that aren't as commonplace.
-    """
-    return EXTENSIONS.get(extension)
 
 
 async def process_hb(user_id, machine_id, heartbeat, *, app_=None):
@@ -62,7 +54,7 @@ async def process_hb(user_id, machine_id, heartbeat, *, app_=None):
     app_ = app_ or app
     heartbeat_id = uuid.uuid4()
 
-    if heartbeat.get('language') is None and heartbeat.get('type') == 'file':
+    if heartbeat.get('language') is None:
         entity_path = heartbeat['entity']
 
         if entity_path.lower().startswith('c:'):
@@ -70,7 +62,7 @@ async def process_hb(user_id, machine_id, heartbeat, *, app_=None):
         else:
             path = pathlib.PurePosixPath(entity_path)
 
-        heartbeat['language'] = lang_from_ext(path.suffix)
+        heartbeat['language'] = EXTENSIONS.get(path.suffix)
 
     existing_hb = await app_.db.fetchval("""
     select id from heartbeats
