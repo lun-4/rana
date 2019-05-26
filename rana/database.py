@@ -4,6 +4,7 @@ import uuid
 import asyncio
 from typing import Optional
 
+import pytz
 import asyncpg
 
 log = logging.getLogger()
@@ -115,10 +116,15 @@ class Database:
         """Execute SQL."""
         return await self.conn.execute(query, *args)
 
-    async def fetch_user_tz(self, user_id: uuid.UUID) -> Optional[str]:
+    async def fetch_user_tz(self, user_id: uuid.UUID):
         """Fetch a user's configured timezone."""
-        return await self.fetchval(
+        olson_tz = await self.fetchval(
             'select timezone from users where id = $1', user_id)
+
+        if not olson_tz:
+            return pytz.timezone('UTC')
+
+        return pytz.timezone(olson_tz)
 
     async def fetch_user(self, user_id: uuid.UUID) -> Optional[dict]:
         """Fetch a single user and return the dictionary

@@ -4,8 +4,9 @@
 import uuid
 import logging
 import datetime
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 
+import pytz
 from quart import Blueprint, request, jsonify, current_app as app
 
 from rana.auth import token_check
@@ -20,6 +21,29 @@ bp = Blueprint('durations', __name__)
 def _isofy(posix_tstamp: int) -> str:
     """Return an ISO timestamp out of a POSIX integer timestamp."""
     return datetime.datetime.fromtimestamp(posix_tstamp).isoformat()
+
+
+def posix_dt_user(posix_tstamp: float, user_tz) -> datetime.datetime:
+    """From a posix timestamp (without timezone), convert it to a
+    datetime object that is in view with the given user_tz."""
+    dt = datetime.datetime.fromtimestamp(posix_tstamp)
+    return dt.astimezone(user_tz)
+
+
+def convert_tz(dtime: datetime.datetime, old_tz: datetime.timezone,
+               new_tz: str):
+    """Convert a non-timezone-aware datetime object (assumed to be on the
+    given old_tz) into a new timezone.
+
+    Given the current user's timezone.
+    """
+    aware_dtime = datetime.datetime(
+        dtime.year, dtime.month, dtime.day,
+        dtime.hour, dtime.minute, dtime.second, tzinfo=old_tz)
+
+    new_as_tz = pytz.timezone(new_tz)
+    return aware_dtime.astimezone(new_as_tz)
+
 
 
 def _dur(row, do_user=False):
@@ -65,13 +89,16 @@ def durations_from_rows(rows, *, do_user=False) -> List[Dict[str, Any]]:
     return durations_lst
 
 
-async def calc_durations(user_id: uuid.UUID, spans, *,
+async def calc_durations(user_id: uuid.UUID, spans: Tuple[int, int], *,
                          more_raw=False) -> list:
     """Iteraively calculate the durations of a given user based
     on the heartbeats."""
     log.debug('calculating durations for uid %r, span0 %r, span1 %r',
               user_id, spans[0], spans[1])
 
+    # spans.0 and spans.1 are in utc, as posix timestamps.
+    # for all purposes, we want to convert from utc back to
+    # the user's local timestamp
     rows = await app.db.fetch(f"""
     SELECT s.user_id, s.language, s.project, s.started_at, s.ended_at
     FROM (
@@ -85,16 +112,29 @@ async def calc_durations(user_id: uuid.UUID, spans, *,
     """, user_id, spans[0], spans[1])
 
     durations_lst = durations_from_rows(rows)
+    user_tz = await app.db.fetch_user_tz(user_id)
 
     def _convert_duration(dur):
+        # converting from UTC to user tz.
+        # pytz already assumes the timezone is UTC when the
+        # datetime object isn't timezone aware, which is good.
+        start = posix_dt_user(dur['start'], user_tz)
+        end = posix_dt_user(dur['end'], user_tz)
+
         if more_raw:
-            return dur
+            return {
+                'project': dur['project'] or 'Other',
+                'language': dur['language'] or 'Other',
+                'start': start,
+                'end': end
+            }
 
         return {
             'project': dur['project'] or 'Other',
             'language': dur['language'] or 'Other',
-            'start': _isofy(dur['start']),
-            'end': _isofy(dur['end']),
+
+            'start': start.isoformat(),
+            'end': end.isoformat(),
         }
 
     return list(map(_convert_duration, durations_lst))
@@ -105,13 +145,24 @@ async def durations(user_id: uuid.UUID, args: dict):
 
     Returns the JSON response for the API.
     """
+    # args['date'] is in the user's current timezone.
+    # we must convert it first to UTC, and from there,
+    # make our calc_durations query.
     spans = args['date'].timespans
-    durations_lst = await calc_durations(user_id, spans)
+
+    user_tz = await app.db.fetch_user_tz(user_id)
+    start = convert_tz(spans[0], user_tz, 'UTC')
+    end = convert_tz(spans[1], user_tz, 'UTC')
+
+    # since now start, and end point to UTC, we can convert
+    # them to timestamps for the DB query.
+    durations_lst = await calc_durations(
+        user_id, (start.timestamp(), end.timestamp()))
 
     return jsonify(durations_lst, extra={
         'branches': ['master'],
-        'start': _isofy(spans[0]),
-        'end': _isofy(spans[1]),
+        'start': start.isoformat(),
+        'end': end.isoformat(),
     })
 
 

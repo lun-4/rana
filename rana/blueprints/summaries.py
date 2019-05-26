@@ -14,7 +14,7 @@ from rana.models import validate, SUMMARIES_IN
 from rana.database import timestamp_
 from rana.errors import BadRequest
 
-from rana.blueprints.durations import calc_durations
+from rana.blueprints.durations import calc_durations, convert_tz
 
 bp = Blueprint('summaries', __name__)
 
@@ -71,12 +71,18 @@ def _day_summary_projects(summary: Dict[str, Any],
 
 
 async def _summary_for_day(user_id, date: datetime.datetime) -> Dict[str, Any]:
-    """Generate a summary for the day."""
+    """Generate a summary for the day.
+    Given date is assumed not-timezone-aware and on the user's
+    local timezone."""
     summary: Dict[str, Any] = {}
+
+    user_tz = await app.db.fetch_user_tz(user_id)
+    date = convert_tz(date, user_tz, 'UTC')
 
     dur_start = date.timestamp()
     day_delta = datetime.timedelta(hours=23, minutes=59, seconds=59)
     dur_end = (date + day_delta).timestamp()
+
     durations = await calc_durations(
         user_id, (dur_start, dur_end), more_raw=True)
 
