@@ -148,7 +148,7 @@ async def durations(user_id: uuid.UUID, args: dict):
     # args['date'] is in the user's current timezone.
     # we must convert it first to UTC, and from there,
     # make our calc_durations query.
-    spans = args['date'].timespans
+    spans = args['date'].spans_as_dt
 
     user_tz = await app.db.fetch_user_tz(user_id)
     start = convert_tz(spans[0], user_tz, 'UTC')
