@@ -41,7 +41,7 @@ async def calc_leaders(language=None):
         SELECT user_id, language, project, time AS started_at,
                (LAG(time) OVER (ORDER BY time DESC)) AS ended_at
         FROM heartbeats
-        WHERE time > $1 and time < $2 {lang_clause}
+        WHERE time > $1 and time < $2 and is_write = true {lang_clause}
         GROUP BY user_id, language, project, time
         ORDER BY started_at) AS s
     WHERE s.ended_at - s.started_at < 600
