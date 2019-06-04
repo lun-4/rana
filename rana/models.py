@@ -90,7 +90,7 @@ HEARTBEAT_MODEL = {
               'required': False, 'default': 0},
     'lineno': {'coerce': int, 'dependencies': ['type'],
                'required': False, 'nullable': True, 'default': 0},
-    'cursorpos': {'coerce': 'int', 'dependencies': ['type'],
+    'cursorpos': {'coerce': int, 'dependencies': ['type'],
                   'required': False, 'nullable': True, 'default': None},
 
     'is_write': {'coerce': bool, 'dependencies': ['type'],
