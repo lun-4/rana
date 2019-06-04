@@ -86,11 +86,11 @@ HEARTBEAT_MODEL = {
     'dependencies': {
         'type': 'list', 'schema': {'type': 'string'}, 'required': False},
 
-    'lines': {'type': 'integer', 'dependencies': ['type'],
+    'lines': {'coerce': int, 'dependencies': ['type'],
               'required': False, 'default': 0},
-    'lineno': {'type': 'integer', 'dependencies': ['type'],
+    'lineno': {'coerce': int, 'dependencies': ['type'],
                'required': False, 'nullable': True, 'default': 0},
-    'cursorpos': {'type': 'integer', 'dependencies': ['type'],
+    'cursorpos': {'coerce': 'int', 'dependencies': ['type'],
                   'required': False, 'nullable': True, 'default': None},
 
     'is_write': {'coerce': bool, 'dependencies': ['type'],
