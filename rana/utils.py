@@ -7,6 +7,14 @@ class Date:
     """Represents a single date from the WakaTime API."""
     def __init__(self, value):
         self.value = value
+
+        if value == 'today':
+            utcnow = datetime.datetime.utcnow()
+            self.date = datetime.datetime(
+                year=utcnow.year, month=utcnow.month, day=utcnow.day)
+
+            return
+
         components = value.split('-')
         if len(components) != 3:
             raise ValueError('invalid date format')
