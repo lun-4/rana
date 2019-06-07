@@ -33,8 +33,11 @@ async def _extract_userpass():
     Does not return a tuple if something happened.
     """
     req_data = (await request.get_data()).decode()
+
+    # If no request data is found, we don't return an error, and instead
+    # just wish to render the template without an error.
     if not req_data:
-        raise BadRequest('No request body data found')
+        raise BadRequest('')
 
     data = urllib.parse.parse_qs(req_data)
 
