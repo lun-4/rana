@@ -36,7 +36,8 @@ function setupApiKeyCopy() {
 }
 
 async function loadGraph() {
-  await rana.request('/api/v1/users/current/summaries')
+  const summaries = await rana.summaries(7)
+  console.log(summaries)
 }
 
 document.addEventListener('DOMContentLoaded', () => {
