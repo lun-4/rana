@@ -167,7 +167,7 @@ async def revoke_api_key():
     """, str(old_api_key), str(new_api_key))
 
     session['api_key'] = new_api_key
-    return await _dashboard_tmpl()
+    return redirect('/dashboard')
 
 
 @bp.route('/logout', methods=['GET'])
