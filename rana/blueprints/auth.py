@@ -4,50 +4,44 @@ import urllib.parse
 from pathlib import Path
 
 from quart import (
-    Blueprint, jsonify, render_template_string, session,
-    current_app as app, request, redirect
+    Blueprint, jsonify, render_template, render_template_string,
+    session, current_app as app, request, redirect
 )
 
 from rana.auth import login, hash_password
-from rana.errors import Unauthorized
+from rana.errors import Unauthorized, BadRequest
 
 bp = Blueprint('auth', __name__)
 
 
-async def _any_tmpl(filename: str, **kwargs):
-    filepath = Path.cwd() / Path('static') / filename
-
-    return await render_template_string(
-        filepath.read_text(), session=session, **kwargs)
-
-
+# those functions exist to decrease repetition.
 async def _signup_tmpl(**kwargs):
-    return await _any_tmpl('signup.html', **kwargs)
+    return await render_template('signup.html', **kwargs)
 
 
 async def _login_tmpl(**kwargs):
-    return await _any_tmpl('login.html', **kwargs)
+    return await render_template('login.html', **kwargs)
 
 
 async def _dashboard_tmpl(**kwargs):
-    return await _any_tmpl('dashboard.html', **kwargs)
+    return await render_template('dashboard.html', **kwargs)
 
 
-async def _extract_userpass(tmpl):
+async def _extract_userpass():
     """extract a username/password tuple out of the request.
 
     Does not return a tuple if something happened.
     """
     req_data = (await request.get_data()).decode()
     if not req_data:
-        return await tmpl()
+        raise BadRequest('No request body data found')
 
     data = urllib.parse.parse_qs(req_data)
 
     try:
         username, password = data['username'][0], data['password'][0]
     except (KeyError, IndexError):
-        return await tmpl(error='username or password not provided')
+        raise BadRequest('username or password not provided')
 
     try:
         signup_code = data['signup_code'][0]
@@ -61,7 +55,6 @@ async def _extract_userpass(tmpl):
 async def signup_handler():
     """Handle a signup for a user."""
     signup_allowed = app.cfg['rana']['signups']
-
     signup_code = app.cfg['rana']['signup_code']
 
     # configparser will give us an empty string when the key isn't set
@@ -70,9 +63,10 @@ async def signup_handler():
     if not signup_code:
         signup_code = None
 
-    res = await _extract_userpass(_signup_tmpl)
-    if not isinstance(res, tuple):
-        return res
+    try:
+        res = await _extract_userpass()
+    except BadRequest as err:
+        return await _signup_tmpl(error=err.message)
 
     # unpack formdata into what we want
     username, password, signup_code = res
@@ -88,7 +82,7 @@ async def signup_handler():
     """, username)
 
     if existing is not None:
-        return await _signup_tmpl(error='username already exists')
+        return await _signup_tmpl(error='username exists')
 
     user_id = uuid.uuid4()
     api_key = uuid.uuid4()
@@ -115,9 +109,10 @@ async def login_handler():
     if session.get('user_id'):
         return redirect('/dashboard')
 
-    res = await _extract_userpass(_login_tmpl)
-    if not isinstance(res, tuple):
-        return res
+    try:
+        res = await _extract_userpass()
+    except BadRequest as err:
+        return await _login_tmpl(error=err.message)
 
     username, password, _ = res
     user_id = await login(username, password)
