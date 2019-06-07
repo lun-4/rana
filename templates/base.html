@@ -15,9 +15,9 @@
 
     <main>
       {% block body %} {% endblock %}
-
     </main>
 
+    {% block scripts %} {% endblock %}
     <script src="js/rana.js"></script>
     <script>
       window.rana = new RanaClient("{{ session['api_key'] }}")
