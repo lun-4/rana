@@ -1,41 +1,26 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="css/rana.css" />
-    <title>dashboard — rana</title>
-  </head>
-  <body>
-    <nav>
-      <h1>rana</h1>
-    </nav>
+{% extends "./templates/base.html" %}
 
-    <main>
-      <p>you are logged in as <b>{{ session['username'] }}</b></p>
+{% block body %}
+<p>you are logged in as <b>{{ session['username'] }}</b></p>
 
-      <p>
-        your api key:
-        <mark><code class="api-key">{{ session['api_key'] }}</code></mark>
-        <br /><small>(click to copy)</small>
-      </p>
+<p>
+  your api key:
+  <mark><code class="api-key">{{ session['api_key'] }}</code></mark>
+  <br /><small>(click to copy)</small>
+</p>
 
-      <h2>your activity</h2>
+<h2>your activity</h2>
 
-      <div id="graph"></div>
+<div id="graph"></div>
 
-      <h2>actions</h2>
+<h2>actions</h2>
 
-      <a href="/revoke_api_key">click here to reset your api key</a>
-      <p><a href="logout">click here to logout</a></p>
-    </main>
+<a href="/revoke_api_key">click here to reset your api key</a>
+<p><a href="logout">click here to logout</a></p>
+{% endblock %}
 
-    <script src="http://cdn.date-fns.org/v1.0.0/date_fns.min.js"></script>
-    <script src="https://d3js.org/d3.v5.min.js"></script>
-    <script src="js/rana.js"></script>
-    <script>
-      window.rana = new RanaClient("{{ session['api_key'] }}")
-    </script>
-    <script src="js/dashboard.js"></script>
-  </body>
-</html>
+{% block scripts %}
+<script src="http://cdn.date-fns.org/v1.0.0/date_fns.min.js"></script>
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script src="js/dashboard.js"></script>
+{% endblock %}

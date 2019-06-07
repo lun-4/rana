@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="css/rana.css" />
+    {% block title %}
+    <title>rana</title>
+    {% endblock %}
+  </head>
+  <body>
+    <nav>
+      <h1>rana</h1>
+    </nav>
+
+    <main>
+      {% block body %} {% endblock %}
+
+    </main>
+
+    <script src="js/rana.js"></script>
+    <script>
+      window.rana = new RanaClient("{{ session['api_key'] }}")
+    </script>
+  </body>
+</html>
