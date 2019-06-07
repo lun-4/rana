@@ -1,20 +1,37 @@
-const RANA_URL = "https://rana.discordapp.io/api/v1";
+const RANA_ENDPOINT = `${location.protocol}//${location.host}`
 
 class RanaClient {
-    constructor (apiKey) {
-        this.apiKey = apiKey;
+  constructor(key, { endpoint = RANA_ENDPOINT } = {}) {
+    this.endpoint = endpoint
+    this.key = key
+  }
+
+  keyAsBase64() {
+    return window.btoa(this.key)
+  }
+
+  async request(path) {
+    const resp = await fetch(this.endpoint + path, {
+      headers: {
+        Authorization: `Basic ${this.keyAsBase64()}`,
+      },
+    })
+
+    if (!resp.ok) {
+      let message = `HTTP ${resp.status}`
+
+      try {
+        const payload = await resp.json()
+        if (payload.error) {
+          message += ` (${payload.error})`
+        }
+      } catch (_error) {
+        message += ' (No error field.)'
+      }
+
+      throw new Error(message)
     }
 
-    doRequest(path) {
-        let b64_api_key = window.btoa(this.apiKey);
-
-        fetch(`${rana_url}${path}`, {
-            headers: {
-                'Authorization': `Basic ${b64_api_key}`,
-            }
-        }).then(function(response) {
-            return response.json();
-        })
-    }
+    console.log(await resp.json())
+  }
 }
-

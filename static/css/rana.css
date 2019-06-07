@@ -1,0 +1,75 @@
+/* らな */
+
+html {
+  --sans-serif-font: system-ui, sans-serif;
+  --monospace-font: PragmataPro, Iosevka, 'DejaVu Sans Mono', Consolas, Menlo,
+    monospace;
+  --mark-color: hsl(25, 100%, 85%);
+  --mark-color-secondary: hsl(25, 100%, 90%);
+
+  background: white;
+  color: black;
+  font: 16px/1.5 var(--sans-serif-font);
+}
+
+a {
+  color: hsl(225, 100%, 60%);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+body {
+  margin: 0;
+}
+
+nav {
+  padding: 0.5rem 1rem;
+  background: #eee;
+}
+
+nav h1 {
+  margin: 0;
+}
+
+main {
+  margin: 1rem;
+}
+
+code {
+  font-family: var(--monospace-font);
+
+  padding: 0.1rem 0.25rem;
+  background-color: #ddd;
+  border-radius: 0.15rem;
+}
+
+mark {
+  background-color: var(--mark-color-secondary);
+}
+
+mark:hover {
+  background-color: var(--mark-color);
+}
+
+mark code {
+  background-color: inherit;
+}
+
+.api-key {
+  cursor: pointer;
+}
+
+@keyframes flash-mark {
+  from {
+    background: var(--mark-color);
+  }
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: border-box;
+}
