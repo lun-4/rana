@@ -1,5 +1,6 @@
 import logging
 import secrets
+from pathlib import Path
 
 from configparser import ConfigParser
 
@@ -16,7 +17,7 @@ log = logging.getLogger(__name__)
 
 def make_app() -> Quart:
     """Return the app instance."""
-    app_ = Quart(__name__, template_folder='./templates')
+    app_ = Quart(__name__, template_folder='./templates', root_path=Path.cwd())
     app_._testing = False
 
     app_.cfg = ConfigParser()
