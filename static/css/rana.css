@@ -12,6 +12,16 @@ html {
   font: 16px/1.5 var(--sans-serif-font);
 }
 
+*,
+*:before,
+*:after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
 a {
   color: hsl(225, 100%, 60%);
   text-decoration: none;
@@ -19,10 +29,6 @@ a {
 
 a:hover {
   text-decoration: underline;
-}
-
-body {
-  margin: 0;
 }
 
 nav {
@@ -68,8 +74,15 @@ mark code {
   }
 }
 
-*,
-*:before,
-*:after {
-  box-sizing: border-box;
+.form-error {
+  background: hsl(0, 50%, 90%);
+  padding: 1rem;
+}
+
+.form-group {
+  margin: 1rem 0;
+}
+
+.form-group label {
+  display: block;
 }
