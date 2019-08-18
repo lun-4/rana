@@ -16,26 +16,27 @@ from rana.models import validate, LEADERS_IN
 
 from rana.blueprints.durations import durations_from_rows
 
-bp = Blueprint('leaders', __name__)
+bp = Blueprint("leaders", __name__)
 log = logging.getLogger(__name__)
 
 USERS_PER_PAGE = 20
+
 
 async def calc_leaders(language=None):
     """Calculate the global/language leaderboard."""
     utcnow = datetime.datetime.utcnow()
 
     # remove hour/minute/second
-    utcnow = datetime.datetime(
-        year=utcnow.year, month=utcnow.month, day=utcnow.day)
+    utcnow = datetime.datetime(year=utcnow.year, month=utcnow.month, day=utcnow.day)
 
-    start = (utcnow - datetime.timedelta(days=7))
+    start = utcnow - datetime.timedelta(days=7)
     end = utcnow
 
     args = [language] if language else []
-    lang_clause = 'and language = $3' if language else ''
+    lang_clause = "and language = $3" if language else ""
 
-    rows = await app.db.fetch(f"""
+    rows = await app.db.fetch(
+        f"""
     SELECT s.user_id, s.language, s.project, s.started_at, s.ended_at
     FROM (
         SELECT user_id, language, project, time AS started_at,
@@ -45,17 +46,21 @@ async def calc_leaders(language=None):
         GROUP BY user_id, language, project, time
         ORDER BY started_at) AS s
     WHERE s.ended_at - s.started_at < 600
-    """, start.timestamp(), end.timestamp(), *args)
+    """,
+        start.timestamp(),
+        end.timestamp(),
+        *args,
+    )
 
     durations = durations_from_rows(rows, do_user=True)
-    log.debug('%d rows, %d global durations', len(rows), len(durations))
+    log.debug("%d rows, %d global durations", len(rows), len(durations))
 
     leader_data = defaultdict(lambda: Counter())
 
     for duration in durations:
-        user_id = duration['user_id']
-        lang = duration['language'] or 'Other'
-        total_seconds = duration['end'] - duration['start']
+        user_id = duration["user_id"]
+        lang = duration["language"] or "Other"
+        total_seconds = duration["end"] - duration["start"]
 
         leader_data[user_id][lang] += total_seconds
 
@@ -70,33 +75,30 @@ async def rank_for_user(leader_data, global_rank, sorted_leaders, user_id):
 
     rank = sorted_leaders.index(user_id)
     langs_counts = {
-        lang: tot_secs
-        for lang, tot_secs
-        in leader_data[user_id].most_common()
+        lang: tot_secs for lang, tot_secs in leader_data[user_id].most_common()
     }
 
     return {
-        'rank': rank,
-        'running_total': {
+        "rank": rank,
+        "running_total": {
             # api clients can check the start and end of the
             # leaderboard ranges and divide this given total_seconds
             # by the amount of days on that range.
-            'total_seconds': global_rank[user_id],
-            'languages': langs_counts,
+            "total_seconds": global_rank[user_id],
+            "languages": langs_counts,
         },
-        'user': user
+        "user": user,
     }
 
 
-@bp.route('', methods=['GET'])
+@bp.route("", methods=["GET"])
 async def get_leaders():
     user_id = await token_check()
     args = validate(dict(request.args), LEADERS_IN)
 
     # NOTE: this is bad bc the pages dont actually work on
     # removing the query hell
-    time_range, leader_data = await calc_leaders(
-        language=args.get('language'))
+    time_range, leader_data = await calc_leaders(language=args.get("language"))
 
     global_rank = {
         user_id: sum(val for _, val in lang_counter.most_common())
@@ -104,27 +106,30 @@ async def get_leaders():
     }
 
     leaders_count = len(global_rank)
-    leaders_idx = args['page'] * USERS_PER_PAGE
-    sorted_leaders = sorted(global_rank.keys(),
-                            key=lambda uid: global_rank[uid])
-    leader_ids = list(sorted_leaders)[leaders_idx:leaders_idx + USERS_PER_PAGE]
+    leaders_idx = args["page"] * USERS_PER_PAGE
+    sorted_leaders = sorted(global_rank.keys(), key=lambda uid: global_rank[uid])
+    leader_ids = list(sorted_leaders)[leaders_idx : leaders_idx + USERS_PER_PAGE]
 
     data = []
 
     for user_id in leader_ids:
-        data.append(await rank_for_user(
-            leader_data, global_rank, sorted_leaders, user_id))
+        data.append(
+            await rank_for_user(leader_data, global_rank, sorted_leaders, user_id)
+        )
 
-    return jsonify(data, extra={
-        'user': await app.db.fetch_user_simple(user_id),
-        'current_user': await rank_for_user(
-            leader_data, global_rank, sorted_leaders, user_id),
-        'range': {
-            'start_date': time_range[0].isoformat(),
-            'end_date': time_range[1].isoformat(),
+    return jsonify(
+        data,
+        extra={
+            "user": await app.db.fetch_user_simple(user_id),
+            "current_user": await rank_for_user(
+                leader_data, global_rank, sorted_leaders, user_id
+            ),
+            "range": {
+                "start_date": time_range[0].isoformat(),
+                "end_date": time_range[1].isoformat(),
+            },
+            "language": args.get("language"),
+            "page": args["page"],
+            "total_pages": ceil(leaders_count / USERS_PER_PAGE),
         },
-        'language': args.get('language'),
-
-        'page': args['page'],
-        'total_pages': ceil(leaders_count / USERS_PER_PAGE),
-    })
+    )

@@ -10,11 +10,12 @@ from rana.utils import Date
 
 log = logging.getLogger(__name__)
 
-USERNAME_REGEX = re.compile(r'^[a-zA-Z0-9_ ]{2,30}$', re.A)
+USERNAME_REGEX = re.compile(r"^[a-zA-Z0-9_ ]{2,30}$", re.A)
 
 
 class RanaValidator(Validator):
     """Main validator class for Litecord, containing custom types."""
+
     def _validate_type_username(self, value: str) -> bool:
         """Validate against the username regex."""
         return bool(USERNAME_REGEX.match(value))
@@ -24,19 +25,26 @@ class RanaValidator(Validator):
         return 1 <= len(value) <= 2048
 
     def _validate_type_entity_type(self, value):
-        return value in ('app', 'file', 'domain')
+        return value in ("app", "file", "domain")
 
     def _validate_type_activity_type(self, value):
         return value in (
-            'coding', 'building', 'indexing',
-            'debugging', 'browsing', 'running tests',
-            'writing tests', 'manual testing',
-            'code reviewing', 'designing'
+            "coding",
+            "building",
+            "indexing",
+            "debugging",
+            "browsing",
+            "running tests",
+            "writing tests",
+            "manual testing",
+            "code reviewing",
+            "designing",
         )
 
 
-def validate(reqjson: Union[Dict, List], schema: Dict,
-             raise_err: bool = True) -> Optional[Dict]:
+def validate(
+    reqjson: Union[Dict, List], schema: Dict, raise_err: bool = True
+) -> Optional[Dict]:
     """Validate the given user-given data against a schema, giving the
     "correct" version of the document, with all defaults applied.
 
@@ -55,66 +63,74 @@ def validate(reqjson: Union[Dict, List], schema: Dict,
     try:
         valid = validator.validate(reqjson)
     except Exception:
-        log.exception('Error while validating')
-        raise Exception(f'Error while validating: {reqjson}')
+        log.exception("Error while validating")
+        raise Exception(f"Error while validating: {reqjson}")
 
     if not valid:
         errs = validator.errors
-        log.warning('Error validating doc %r: %r', reqjson, errs)
+        log.warning("Error validating doc %r: %r", reqjson, errs)
 
         if raise_err:
-            raise BadRequest(f'bad payload: {errs!r}')
+            raise BadRequest(f"bad payload: {errs!r}")
 
         return None
 
     return validator.document
 
+
 HEARTBEAT_MODEL = {
-    'entity': {'type': 'string', 'required': True, 'nullable': False},
-    'type': {'type': 'entity_type', 'required': True, 'nullable': False},
-
-    'category': {'type': 'activity_type', 'nullable': True},
-    'time': {'coerce': float},
-
-    'project': {'type': 'string', 'required': False,
-                'nullable': True, 'default': None},
-    'branch': {'type': 'string', 'required': False,
-               'nullable': True, 'default': None},
-    'language': {'type': 'string', 'required': False,
-                 'nullable': True, 'default': None},
-
-    'dependencies': {
-        'type': 'list', 'schema': {'type': 'string'}, 'required': False},
-
-    'lines': {'coerce': int, 'dependencies': ['type'],
-              'required': False, 'default': 0},
-    'lineno': {'coerce': int, 'dependencies': ['type'],
-               'required': False, 'nullable': True, 'default': 0},
-    'cursorpos': {'coerce': int, 'dependencies': ['type'],
-                  'required': False, 'nullable': True, 'default': None},
-
-    'is_write': {'coerce': bool, 'dependencies': ['type'],
-                 'required': False, 'default': None},
-
+    "entity": {"type": "string", "required": True, "nullable": False},
+    "type": {"type": "entity_type", "required": True, "nullable": False},
+    "category": {"type": "activity_type", "nullable": True},
+    "time": {"coerce": float},
+    "project": {"type": "string", "required": False, "nullable": True, "default": None},
+    "branch": {"type": "string", "required": False, "nullable": True, "default": None},
+    "language": {
+        "type": "string",
+        "required": False,
+        "nullable": True,
+        "default": None,
+    },
+    "dependencies": {"type": "list", "schema": {"type": "string"}, "required": False},
+    "lines": {"coerce": int, "dependencies": ["type"], "required": False, "default": 0},
+    "lineno": {
+        "coerce": int,
+        "dependencies": ["type"],
+        "required": False,
+        "nullable": True,
+        "default": 0,
+    },
+    "cursorpos": {
+        "coerce": int,
+        "dependencies": ["type"],
+        "required": False,
+        "nullable": True,
+        "default": None,
+    },
+    "is_write": {
+        "coerce": bool,
+        "dependencies": ["type"],
+        "required": False,
+        "default": None,
+    },
     # ignored
-    'user_agent': {'type': 'string', 'required': False},
+    "user_agent": {"type": "string", "required": False},
 }
 
 DURATIONS_IN = {
-    'date': {'coerce': Date, 'required': True, 'nullable': False},
-    'project': {'type': 'string', 'required': False},
-    'branches': {'type': 'string', 'required': False}
+    "date": {"coerce": Date, "required": True, "nullable": False},
+    "project": {"type": "string", "required": False},
+    "branches": {"type": "string", "required": False},
 }
 
 SUMMARIES_IN = {
-    'start': {'coerce': Date, 'required': True, 'nullable': False},
-    'end': {'coerce': Date, 'required': True, 'nullable': False},
-
-    'project': {'type': 'string', 'required': False},
-    'branches': {'type': 'string', 'required': False}
+    "start": {"coerce": Date, "required": True, "nullable": False},
+    "end": {"coerce": Date, "required": True, "nullable": False},
+    "project": {"type": "string", "required": False},
+    "branches": {"type": "string", "required": False},
 }
 
 LEADERS_IN = {
-    'language': {'type': 'string', 'required': False},
-    'page': {'coerce': int, 'required': False, 'default': 0},
+    "language": {"type": "string", "required": False},
+    "page": {"coerce": int, "required": False, "default": 0},
 }

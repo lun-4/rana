@@ -6,5 +6,4 @@ from .durations import bp as durations
 from .summaries import bp as summaries
 from .leaders import bp as leaders
 
-__all__ = ['heartbeats', 'users', 'auth', 'index',
-           'durations', 'summaries', 'leaders']
+__all__ = ["heartbeats", "users", "auth", "index", "durations", "summaries", "leaders"]

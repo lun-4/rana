@@ -83,6 +83,7 @@ create table if not exists heartbeats (
 
 class Database:
     """Main database class."""
+
     def __init__(self, app):
         self.app = app
         self.conn = None
@@ -90,13 +91,13 @@ class Database:
 
     async def init(self, app):
         """Create basic tables."""
-        self.conn = await asyncpg.create_pool(**dict(app.cfg['rana:database']))
+        self.conn = await asyncpg.create_pool(**dict(app.cfg["rana:database"]))
         app.conn = self.conn
         await self.conn.execute(SQL_SETUP_SCRIPT)
 
     async def close(self):
         """Close the database."""
-        log.debug('closing db')
+        log.debug("closing db")
         if self.conn:
             await self.conn.close()
 
@@ -119,10 +120,11 @@ class Database:
     async def fetch_user_tz(self, user_id: uuid.UUID):
         """Fetch a user's configured timezone."""
         olson_tz = await self.fetchval(
-            'select timezone from users where id = $1', user_id)
+            "select timezone from users where id = $1", user_id
+        )
 
         if not olson_tz:
-            return pytz.timezone('UTC')
+            return pytz.timezone("UTC")
 
         return pytz.timezone(olson_tz)
 
@@ -130,118 +132,122 @@ class Database:
         """Fetch a single user and return the dictionary
         representing the API view of them.
         """
-        row = await self.fetchrow("""
+        row = await self.fetchrow(
+            """
         select
             id, username, display_name, website, created_at, modified_at,
             last_heartbeat_at, last_plugin, last_plugin_name, last_project,
             timezone
         from users where id = $1
-        """, user_id)
+        """,
+            user_id,
+        )
 
         if not row:
             return None
 
         user = {
-            'id': uuid_(row[0]),
-            'username': row[1],
-
+            "id": uuid_(row[0]),
+            "username": row[1],
             # no "full legal names" here uwuwuwuwu
             # trans rights
-            'display_name': row[2],
-            'full_name': row[2],
-
-            'website': row[3],
-            'created_at': timestamp_(row[4]),
-            'modified_at': timestamp_(row[5]),
-
-            'last_heartbeat_at': row[6],
-            'last_plugin': row[7],
-            'last_plugin_name': row[8],
-            'last_project': row[9],
-            'timezone': row[10],
-
-            'logged_time_public': False,
-            'languages_used_public': False,
-
+            "display_name": row[2],
+            "full_name": row[2],
+            "website": row[3],
+            "created_at": timestamp_(row[4]),
+            "modified_at": timestamp_(row[5]),
+            "last_heartbeat_at": row[6],
+            "last_plugin": row[7],
+            "last_plugin_name": row[8],
+            "last_project": row[9],
+            "timezone": row[10],
+            "logged_time_public": False,
+            "languages_used_public": False,
             # i do not store full name or email pls
-            'email': 'uwu@uwu.com',
-            'email_public': False,
-
+            "email": "uwu@uwu.com",
+            "email_public": False,
             # TODO: should we put something here?
-            'photo': None,
-
-            'is_hireable': False,
-            'has_premium_features': False,
-            'plan': 'basic',
-            'location': 'Canberra, Australia',
+            "photo": None,
+            "is_hireable": False,
+            "has_premium_features": False,
+            "plan": "basic",
+            "location": "Canberra, Australia",
         }
 
-        if user['website'] is not None:
+        if user["website"] is not None:
             # TODO: use urllib.parse
-            user['human_readable_website'] = user['website'].lstrip('https://')
+            user["human_readable_website"] = user["website"].lstrip("https://")
 
         return user
 
     async def fetch_user_simple(self, user_id: uuid.UUID) -> Optional[dict]:
         """Fetch a single simple view user."""
-        row = await self.fetchrow("""
+        row = await self.fetchrow(
+            """
         select
             id, username, display_name, website
         from users where id = $1
-        """, user_id)
+        """,
+            user_id,
+        )
 
         if not row:
             return None
 
         return {
-            'id': uuid_(row[0]),
-            'username': row[1],
-            'display_name': row[2],
-            'website': row[3],
+            "id": uuid_(row[0]),
+            "username": row[1],
+            "display_name": row[2],
+            "website": row[3],
         }
 
     async def fetch_heartbeat(self, heartbeat_id: uuid.UUID) -> Optional[dict]:
         """Fetch a single heartbeat."""
         # TODO: complete this query with all columns from heartbeats table.
-        row = await self.fetchrow("""
+        row = await self.fetchrow(
+            """
         select
             id, entity, type, category, time, project, language
         from heartbeats where id = $1
-        """, heartbeat_id)
+        """,
+            heartbeat_id,
+        )
 
         if not row:
             return None
 
         heartbeat = {
-            'id': uuid_(row[0]),
-            'entity': row[1],
-            'type': row[2],
-            'category': row[3],
-            'time': row[4],
-            'project': row[5],
-            'language': row[6],
+            "id": uuid_(row[0]),
+            "entity": row[1],
+            "type": row[2],
+            "category": row[3],
+            "time": row[4],
+            "project": row[5],
+            "language": row[6],
         }
 
         return heartbeat
 
-    async def fetch_heartbeat_simple(
-            self, heartbeat_id: uuid.UUID) -> Optional[dict]:
+    async def fetch_heartbeat_simple(self, heartbeat_id: uuid.UUID) -> Optional[dict]:
         """Fetch a single heartbeat."""
-        row = await self.fetchrow("""
+        row = await self.fetchrow(
+            """
         select
             id, entity, type, time, project
         from heartbeats where id = $1
-        """, heartbeat_id)
+        """,
+            heartbeat_id,
+        )
 
         if not row:
             return None
 
         heartbeat = {
-            'id': uuid_(row[0]),
-            'entity': row[1],
-            'type': row[2],
-            'time': row[3],
-            'project': row[4],
+            "id": uuid_(row[0]),
+            "entity": row[1],
+            "type": row[2],
+            "time": row[3],
+            "project": row[4],
         }
 
         return heartbeat

@@ -11,7 +11,7 @@ from rana.models import validate, HEARTBEAT_MODEL
 from rana.utils import jsonify as jsonify
 
 log = logging.getLogger(__name__)
-bp = Blueprint('heartbeats', __name__)
+bp = Blueprint("heartbeats", __name__)
 
 
 async def fetch_machine(user_id, mach_name=None, *, app_=None) -> uuid.UUID:
@@ -23,30 +23,37 @@ async def fetch_machine(user_id, mach_name=None, *, app_=None) -> uuid.UUID:
 
     if mach_name is None:
         try:
-            mach_name = request.headers['x-machine-name']
+            mach_name = request.headers["x-machine-name"]
         except KeyError:
-            mach_name = 'root'
+            mach_name = "root"
 
-    mach_id = await app_.db.fetchval("""
+    mach_id = await app_.db.fetchval(
+        """
     select id from machines where name = $1 and user_id = $2
-    """, mach_name, user_id)
+    """,
+        mach_name,
+        user_id,
+    )
 
     if mach_id is not None:
         return mach_id
 
     mach_id = uuid.uuid4()
 
-    await app_.db.execute("""
+    await app_.db.execute(
+        """
     insert into machines (id, user_id, name)
     values ($1, $2, $3)
-    """, mach_id, user_id, mach_name)
+    """,
+        mach_id,
+        user_id,
+        mach_name,
+    )
 
     return mach_id
 
 
-EXTENSIONS = {
-    '.zig': 'Zig',
-}
+EXTENSIONS = {".zig": "Zig"}
 
 
 async def process_hb(user_id, machine_id, heartbeat, *, app_=None):
@@ -54,32 +61,43 @@ async def process_hb(user_id, machine_id, heartbeat, *, app_=None):
     app_ = app_ or app
     heartbeat_id = uuid.uuid4()
 
-    if heartbeat.get('language') is None:
-        entity_path = heartbeat['entity']
+    if heartbeat.get("language") is None:
+        entity_path = heartbeat["entity"]
 
-        if entity_path.lower().startswith('c:'):
+        if entity_path.lower().startswith("c:"):
             path = pathlib.PureWindowsPath(entity_path)
         else:
             path = pathlib.PurePosixPath(entity_path)
 
-        heartbeat['language'] = EXTENSIONS.get(path.suffix)
+        heartbeat["language"] = EXTENSIONS.get(path.suffix)
 
-    existing_hb = await app_.db.fetchval("""
+    existing_hb = await app_.db.fetchval(
+        """
     select id from heartbeats
     where entity = $1 and abs(($2 - time)::bigint) < 60
     limit 1
-    """, heartbeat['entity'], heartbeat['time'])
+    """,
+        heartbeat["entity"],
+        heartbeat["time"],
+    )
 
     if existing_hb:
         existing = await app_.db.fetch_heartbeat_simple(existing_hb)
-        log.debug('found close heartbeat: %r %r dt=%r',
-                  existing['time'], heartbeat['time'],
-                  existing['time'] - heartbeat['time'])
+        log.debug(
+            "found close heartbeat: %r %r dt=%r",
+            existing["time"],
+            heartbeat["time"],
+            existing["time"] - heartbeat["time"],
+        )
         return existing
 
-    log.debug('add heartbeat %r: uid=%r entity=%r lang=%r',
-              heartbeat_id.hex, user_id.hex, heartbeat['entity'],
-              heartbeat['language'])
+    log.debug(
+        "add heartbeat %r: uid=%r entity=%r lang=%r",
+        heartbeat_id.hex,
+        user_id.hex,
+        heartbeat["entity"],
+        heartbeat["language"],
+    )
 
     await app_.db.execute(
         """
@@ -93,16 +111,26 @@ async def process_hb(user_id, machine_id, heartbeat, *, app_=None):
              $10, $11, $12,
              $13, $14)
         """,
-        heartbeat_id, user_id, machine_id,
-        heartbeat['entity'], heartbeat['type'], heartbeat['category'],
-        heartbeat['time'], heartbeat['is_write'], heartbeat['project'],
-        heartbeat['branch'], heartbeat['language'], heartbeat['lines'],
-        heartbeat['lineno'], heartbeat['cursorpos'])
+        heartbeat_id,
+        user_id,
+        machine_id,
+        heartbeat["entity"],
+        heartbeat["type"],
+        heartbeat["category"],
+        heartbeat["time"],
+        heartbeat["is_write"],
+        heartbeat["project"],
+        heartbeat["branch"],
+        heartbeat["language"],
+        heartbeat["lines"],
+        heartbeat["lineno"],
+        heartbeat["cursorpos"],
+    )
 
     return await app_.db.fetch_heartbeat_simple(heartbeat_id)
 
 
-@bp.route('/current/heartbeats', methods=['POST'])
+@bp.route("/current/heartbeats", methods=["POST"])
 async def post_heartbeat():
     user_id = await token_check()
     raw_json = await request.get_json()
@@ -113,33 +141,29 @@ async def post_heartbeat():
     return jsonify(heartbeat), 201
 
 
-@bp.route('/current/heartbeats.bulk', methods=['POST'])
+@bp.route("/current/heartbeats.bulk", methods=["POST"])
 async def post_many_heartbeats():
     user_id = await token_check()
 
     raw_json = await request.get_json()
     if not isinstance(raw_json, list):
-        raise BadRequest('no heartbeat list provided')
+        raise BadRequest("no heartbeat list provided")
 
-    j = validate({'hbs': raw_json}, {
-        'hbs': {
-            'type': 'list',
-            'schema': {
-                'type': 'dict',
-                'schema': HEARTBEAT_MODEL
+    j = validate(
+        {"hbs": raw_json},
+        {
+            "hbs": {
+                "type": "list",
+                "schema": {"type": "dict", "schema": HEARTBEAT_MODEL},
             }
-        }
-    })['hbs']
+        },
+    )["hbs"]
 
     machine_id = await fetch_machine(user_id)
-    log.debug('adding %d heartbeats', len(j))
+    log.debug("adding %d heartbeats", len(j))
 
     res = []
     for heartbeat in j:
-        res.append(
-            await process_hb(user_id, machine_id, heartbeat)
-        )
+        res.append(await process_hb(user_id, machine_id, heartbeat))
 
-    return qjsonify({
-        'responses': res
-    }), 201
+    return qjsonify({"responses": res}), 201

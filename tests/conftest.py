@@ -12,7 +12,7 @@ from rana.run import app as rana_app
 from helper import RanaTestClient
 
 
-@pytest.fixture(name='app')
+@pytest.fixture(name="app")
 def app_fixture(event_loop):
     """Yield Rana's app instance.
 
@@ -50,34 +50,60 @@ async def test_user(app, event_loop):
     password = secrets.token_hex(6)
     pwd_hash = await hash_password(password, loop=event_loop)
 
-    await app.db.execute("""
+    await app.db.execute(
+        """
     insert into users (id, username, password_hash, created_at)
     values ($1, $2, $3, $4)
-    """, user_id, username, pwd_hash, time.time())
+    """,
+        user_id,
+        username,
+        pwd_hash,
+        time.time(),
+    )
 
-    await app.db.execute("""
+    await app.db.execute(
+        """
     insert into api_keys (user_id, key)
     values ($1, $2)
-    """, user_id, str(api_key))
+    """,
+        user_id,
+        str(api_key),
+    )
 
-    yield {'id': user_id, 'api_key': api_key,
-           'username': username, 'password': password}
+    yield {
+        "id": user_id,
+        "api_key": api_key,
+        "username": username,
+        "password": password,
+    }
 
-    await app.db.execute("""
+    await app.db.execute(
+        """
     delete from api_keys where user_id = $1
-    """, user_id)
+    """,
+        user_id,
+    )
 
-    await app.db.execute("""
+    await app.db.execute(
+        """
     delete from heartbeats where user_id = $1
-    """, user_id)
+    """,
+        user_id,
+    )
 
-    await app.db.execute("""
+    await app.db.execute(
+        """
     delete from machines where user_id = $1
-    """, user_id)
+    """,
+        user_id,
+    )
 
-    await app.db.execute("""
+    await app.db.execute(
+        """
     delete from users where id = $1
-    """, user_id)
+    """,
+        user_id,
+    )
 
 
 @pytest.fixture
